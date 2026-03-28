@@ -132,7 +132,7 @@ function App() {
                     
                     {/* 👇 SẾP DÁN LINK ẢNH LOGO VÀO CHỖ src="..." BÊN DƯỚI NHÉ 👇 */}
                     <img 
-                        src="https://photos.app.goo.gl/i8BVUufxfV1XB41t5" 
+                        src="https://i.postimg.cc/nLf79FLk/Do-Va-Va-ng-Ba-i-Da-ng-Facebook-Chu-c-Mu-ng-Te-t-Nguye-n-Da-n-Do-Ho-a.png" 
                         alt="Logo SWC" 
                         className="w-10 h-10 rounded-full border border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] object-cover bg-white" 
                     />
