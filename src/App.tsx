@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import WebApp from '@twa-dev/sdk';
 
-// Định nghĩa kiểu dữ liệu
+// Định nghĩa kiểu dữ liệu (Đã bỏ LINK, ADA)
 interface CryptoPrices {
-    BTC: string; ETH: string; BNB: string; XRP: string; DOGE: string; LINK: string; CAKE: string; ADA: string;
+    BTC: string; ETH: string; BNB: string; XRP: string; DOGE: string; CAKE: string;
 }
 
 interface Transaction {
     id: string; date: string; type: string; amountUSD: number; amountVND: string; status: 'Hoàn thành' | 'Bị huỷ';
 }
 
-// DỮ LIỆU LỊCH SỬ MẪU (UI)
+// DỮ LIỆU LỊCH SỬ MẪU
 const MOCK_HISTORY: Transaction[] = [
     { id: '#SWC102', date: '29/03/2026 14:30', type: 'Mua SWC', amountUSD: 1000, amountVND: '27.000.000', status: 'Hoàn thành' },
     { id: '#RSW098', date: '28/03/2026 09:15', type: 'Mua RSW', amountUSD: 500, amountVND: '13.500.000', status: 'Bị huỷ' },
@@ -23,9 +23,9 @@ function App() {
     const [platform, setPlatform] = useState('SWC');
     const [gmail, setGmail] = useState('');
     
-    // State lưu giá 8 Coin
+    // State lưu giá 6 Coin
     const [prices, setPrices] = useState<CryptoPrices>({
-        BTC: '...', ETH: '...', BNB: '...', XRP: '...', DOGE: '...', LINK: '...', CAKE: '...', ADA: '...'
+        BTC: '...', ETH: '...', BNB: '...', XRP: '...', DOGE: '...', CAKE: '...'
     });
     
     const [tgUser, setTgUser] = useState({
@@ -39,15 +39,14 @@ function App() {
     const rateRSW = parseFloat(urlParams.get('rsw') || '27.0');
     const rates: Record<string, number> = { SWC: rateSWC, RSW: rateRSW };
 
-    // Danh sách 8 đồng coin
-    const displayCoins = ["BTC", "ETH", "BNB", "XRP", "DOGE", "LINK", "CAKE", "ADA"];
+    // 6 đồng coin hiển thị
+    const displayCoins = ["BTC", "ETH", "BNB", "XRP", "DOGE", "CAKE"];
     const binanceSymbols = displayCoins.map(coin => coin + "USDT");
 
     useEffect(() => {
         WebApp.ready();
         WebApp.expand();
         
-        // Lấy Data User từ Telegram
         const user = WebApp.initDataUnsafe?.user;
         if (user) {
             setTgUser({
@@ -77,9 +76,7 @@ function App() {
                     BNB: formatP(priceMap['BNBUSDT'], 2),
                     XRP: formatP(priceMap['XRPUSDT'], 4),
                     DOGE: formatP(priceMap['DOGEUSDT'], 4),
-                    LINK: formatP(priceMap['LINKUSDT'], 2),
-                    CAKE: formatP(priceMap['CAKEUSDT'], 3),
-                    ADA: formatP(priceMap['ADAUSDT'], 4)
+                    CAKE: formatP(priceMap['CAKEUSDT'], 3)
                 });
             } catch (e) { console.error("Lỗi lấy giá Binance:", e); }
         };
@@ -104,16 +101,14 @@ function App() {
         WebApp.sendData(JSON.stringify(payload));
     };
 
-    // Data render cho 8 khối coin
+    // Data render cho 6 khối coin (Dùng Link ảnh Server CoinMarketCap siêu chuẩn, không bao giờ lỗi)
     const coinBlocks = [
-        { sym: 'BTC', p: prices.BTC, img: 'https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=032' },
-        { sym: 'ETH', p: prices.ETH, img: 'https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=032' },
-        { sym: 'BNB', p: prices.BNB, img: 'https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=032' },
-        { sym: 'XRP', p: prices.XRP, img: 'https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=032' },
-        { sym: 'DOGE', p: prices.DOGE, img: 'https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=032' },
-        { sym: 'LINK', p: prices.LINK, img: 'https://cryptologos.cc/logos/chainlink-link-logo.svg?v=032' },
-        { sym: 'CAKE', p: prices.CAKE, img: 'https://cryptologos.cc/logos/pancakeswap-cake-logo.svg?v=032' },
-        { sym: 'ADA', p: prices.ADA, img: 'https://cryptologos.cc/logos/cardano-ada-logo.svg?v=032' }
+        { sym: 'BTC', p: prices.BTC, img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1.png' },
+        { sym: 'ETH', p: prices.ETH, img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png' },
+        { sym: 'BNB', p: prices.BNB, img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png' },
+        { sym: 'XRP', p: prices.XRP, img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/52.png' },
+        { sym: 'DOGE', p: prices.DOGE, img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/74.png' },
+        { sym: 'CAKE', p: prices.CAKE, img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/7186.png' }
     ];
 
     return (
@@ -127,32 +122,32 @@ function App() {
                 }
                 .alert-box-powerful { animation: pulse-border-powerful 1.2s infinite; }
 
+                /* Hiệu ứng Avatar: Kết hợp xoay chậm + Chớp nháy liên tục */
                 @keyframes spin-slow { 100% { transform: rotate(360deg); } }
-                @keyframes glow-pulse {
-                    0%, 100% { border-color: #0ea5e9; box-shadow: 0 0 5px 2px rgba(14, 165, 233, 0.4); }
-                    50% { border-color: #38bdf8; box-shadow: 0 0 20px 8px rgba(56, 189, 248, 0.9); }
+                @keyframes flash-glow {
+                    0%, 100% { border-color: rgba(56, 189, 248, 1); box-shadow: 0 0 10px 2px rgba(56, 189, 248, 0.8); opacity: 1; }
+                    50% { border-color: rgba(56, 189, 248, 0.2); box-shadow: 0 0 2px 0px rgba(56, 189, 248, 0.2); opacity: 0.5; }
                 }
                 .avatar-glow-container { position: relative; display: inline-block; border-radius: 50%; }
                 .avatar-glow-container::before {
-                    content: ''; position: absolute; inset: -5px; border-radius: 50%;
-                    border: 3px dashed; 
-                    animation: spin-slow 8s linear infinite, glow-pulse 1.5s ease-in-out infinite;
+                    content: ''; position: absolute; inset: -4px; border-radius: 50%;
+                    border: 2px dashed; 
+                    animation: spin-slow 6s linear infinite, flash-glow 1s ease-in-out infinite;
                     z-index: 0; box-sizing: border-box;
                 }
             `}</style>
 
-            {/* HEADER DARK MODE XỊN XÒ */}
-            <div className="w-full bg-gray-950 text-white p-4 flex justify-between items-center rounded-b-3xl shadow-xl z-20 shrink-0 border-b border-gray-800">
+            {/* HEADER ĐÃ ĐỔI MÀU GRADIENT XANH NAVY SANG TRỌNG */}
+            <div className="w-full bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-4 flex justify-between items-center rounded-b-3xl shadow-xl z-20 shrink-0 border-b border-blue-900">
                 <div className="flex items-center gap-3">
-                    {/* ĐÃ CHÈN LOGO CỦA SẾP VÀO ĐÂY */}
                     <img 
                         src="https://i.postimg.cc/nLf79FLk/Do-Va-Va-ng-Ba-i-Da-ng-Facebook-Chu-c-Mu-ng-Te-t-Nguye-n-Da-n-Do-Ho-a.png" 
                         alt="Logo SWC" 
-                        className="w-11 h-11 rounded-full border-2 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)] object-cover bg-white" 
+                        className="w-11 h-11 rounded-full border-2 border-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.6)] object-cover bg-white" 
                     />
                     <div className="flex flex-col">
-                        <span className="font-black text-blue-400 text-sm tracking-wide">TRỢ LÝ USDT</span>
-                        <span className="text-[10px] text-gray-400">Nạp rút hỏa tốc</span>
+                        <span className="font-black text-blue-300 text-sm tracking-wide">TRỢ LÝ USDT</span>
+                        <span className="text-[10px] text-blue-200 opacity-80">Nạp rút hỏa tốc</span>
                     </div>
                 </div>
 
@@ -161,28 +156,27 @@ function App() {
                         <span className="font-bold text-sm text-gray-100">{tgUser.name}</span>
                         <span className="text-[10px] text-blue-400 font-semibold">{tgUser.rank}</span>
                     </div>
+                    {/* AVATAR CHỚP NHÁY VÀ XOAY */}
                     <div className="avatar-glow-container w-10 h-10">
                         <img src={tgUser.avatar} alt="Avatar" className="w-full h-full rounded-full object-cover relative z-10 border border-gray-700 bg-gray-800" />
                     </div>
                 </div>
             </div>
 
-            {/* KHU VỰC NỘI DUNG CHÍNH (CÓ THỂ CUỘN) */}
+            {/* KHU VỰC NỘI DUNG CHÍNH */}
             <div className="flex-grow overflow-y-auto pb-24 p-4 block">
                 
                 {/* TAB: GIAO DỊCH */}
                 {activeTab === 'trade' && (
                     <div className="w-full max-w-md mx-auto flex flex-col gap-4 block">
                         
-                        {/* 1. TÁM KHỐI BÁO GIÁ CRYPTO TO */}
-                        <div className="w-full grid grid-cols-2 gap-3 mb-2">
+                        {/* 1. KHỐI 6 COIN (Chia 3 cột x 2 hàng) */}
+                        <div className="w-full grid grid-cols-3 gap-2 mb-2">
                             {coinBlocks.map(coin => (
-                                <div key={coin.sym} className="bg-white border border-gray-100 p-3 rounded-2xl flex items-center justify-between shadow-sm">
-                                    <div className="flex items-center gap-2">
-                                        <img src={coin.img} className="w-7 h-7" alt={coin.sym} />
-                                        <span className="text-xs font-bold text-gray-500">{coin.sym}</span>
-                                    </div>
-                                    <span className="text-sm font-black text-green-500">${coin.p}</span>
+                                <div key={coin.sym} className="bg-white border border-gray-100 py-3 px-2 rounded-xl flex flex-col justify-center items-center shadow-sm">
+                                    <img src={coin.img} className="w-6 h-6 mb-1" alt={coin.sym} />
+                                    <span className="text-[10px] font-bold text-gray-500">{coin.sym}</span>
+                                    <span className="text-xs font-black text-green-500">${coin.p}</span>
                                 </div>
                             ))}
                         </div>
