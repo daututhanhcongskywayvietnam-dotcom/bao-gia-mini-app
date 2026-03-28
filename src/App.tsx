@@ -8,6 +8,7 @@ interface CryptoPrices {
 function App() {
     const [amount, setAmount] = useState('');
     const [platform, setPlatform] = useState('SWC');
+    const [gmail, setGmail] = useState(''); // Thêm state cho Gmail
     const [prices, setPrices] = useState<CryptoPrices>({ BTC: '...', ETH: '...', DOGE: '...', XRP: '...' });
 
     // ĐỌC GIÁ TỪ BOT GỬI QUA URL
@@ -43,6 +44,16 @@ function App() {
 
     const totalVND = (Number(amount) * rates[platform] * 1000).toLocaleString('vi-VN');
 
+    // Nút Gửi dữ liệu: Gửi cả amount, platform và gmail
+    const handleSendData = () => {
+        const payload = {
+            amount: Number(amount),
+            platform,
+            gmail: gmail.trim() || 'Không cung cấp'
+        };
+        WebApp.sendData(JSON.stringify(payload));
+    };
+
     return (
         <div className="min-h-screen w-full flex flex-col items-center bg-gray-50 p-4 font-sans text-black">
             <div className="w-full max-w-md">
@@ -59,18 +70,21 @@ function App() {
                     </div>
                 </div>
 
-                {/* TỶ GIÁ CRYPTO LIVE (ICON MỚI) */}
-                <div className="grid grid-cols-4 gap-2 mb-6">
+                {/* TỶ GIÁ CRYPTO LIVE - CHIA 2 HÀNG & MÀU XANH */}
+                <div className="grid grid-cols-2 gap-3 mb-6"> 
                     {[
                         { sym: 'BTC', p: prices.BTC, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/btc.png' },
                         { sym: 'ETH', p: prices.ETH, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/eth.png' },
                         { sym: 'DOGE', p: prices.DOGE, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/doge.png' },
                         { sym: 'XRP', p: prices.XRP, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/xrp.png' }
                     ].map(coin => (
-                        <div key={coin.sym} className="bg-white border border-gray-100 p-2 rounded-xl flex flex-col items-center shadow-sm">
-                            <img src={coin.img} className="w-6 h-6 mb-1" alt={coin.sym} />
-                            <span className="text-[10px] font-bold text-gray-400">{coin.sym}</span>
-                            <span className="text-[10px] font-black">${coin.p}</span>
+                        <div key={coin.sym} className="bg-white border border-gray-100 p-3 rounded-xl flex items-center shadow-sm">
+                            <img src={coin.img} className="w-8 h-8 mr-3" alt={coin.sym} />
+                            <div className="flex flex-col">
+                                <span className="text-sm font-bold text-gray-500">{coin.sym}</span>
+                                {/* Số hiển thị to hơn và màu xanh thị trường */}
+                                <span className="text-lg font-black text-green-500">${coin.p}</span>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -86,12 +100,23 @@ function App() {
                     <label className="block text-sm font-bold mb-2">2. Số lượng USD:</label>
                     <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full p-3 mb-4 rounded-xl border-2 border-gray-100 font-bold outline-none text-center text-xl" placeholder="VD: 1000" style={{backgroundColor: '#fff', color: '#000'}} />
 
-                    <label className="block text-sm font-bold mb-2">3. Thành tiền (VNĐ):</label>
+                    {/* TRƯỜNG NHẬP GMAIL MỚI */}
+                    <label className="block text-sm font-bold mb-2">3. Gmail của bạn:</label>
+                    <input 
+                        type="email" 
+                        value={gmail} 
+                        onChange={(e) => setGmail(e.target.value)} 
+                        className="w-full p-3 mb-4 rounded-xl border-2 border-gray-100 font-bold outline-none text-center text-lg" 
+                        placeholder="VD: sếp@gmail.com" 
+                        style={{backgroundColor: '#fff', color: '#000'}} 
+                    />
+
+                    <label className="block text-sm font-bold mb-2">4. Thành tiền (VNĐ):</label>
                     <div className="w-full p-4 mb-6 rounded-xl bg-green-50 border-2 border-green-100 text-green-700 text-2xl font-black text-center shadow-inner">
                         {totalVND}
                     </div>
 
-                    <button onClick={() => WebApp.sendData(JSON.stringify({amount: Number(amount), platform}))} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform">
+                    <button onClick={handleSendData} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform">
                         💰 LẤY MÃ QR THANH TOÁN
                     </button>
                 </div>
