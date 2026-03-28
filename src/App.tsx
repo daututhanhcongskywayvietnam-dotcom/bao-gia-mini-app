@@ -22,7 +22,10 @@ function App() {
     const [amount, setAmount] = useState('');
     const [platform, setPlatform] = useState('SWC');
     const [gmail, setGmail] = useState('');
-    const [prices, setPrices] = useState<CryptoPrices>({ BTC: '...', ETH: '...', DOGE: '...', XRP: '...' });
+    const [prices, setPrices] = useState<Record<string, string>>({
+        BTC: '...', ETH: '...', BNB: '...', SOL: '...', XRP: '...', 
+        DOGE: '...', ADA: '...', AVAX: '...', DOT: '...', LINK: '...'
+    });
     
     // Lưu thông tin User Telegram
     const [tgUser, setTgUser] = useState({
@@ -49,7 +52,7 @@ function App() {
             setTgUser({
                 name: user.first_name || 'Khách Hàng',
                 avatar: user.photo_url || 'https://i.pravatar.cc/150?img=11',
-                rank: 'Thành Viên' // Sau này Sếp truyền rank qua URL Params cũng được
+                rank: 'Thành Viên' 
             });
         }
 
@@ -63,8 +66,14 @@ function App() {
                 setPrices({
                     BTC: parseFloat(priceMap['BTCUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
                     ETH: parseFloat(priceMap['ETHUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
-                    DOGE: parseFloat(priceMap['DOGEUSDT']).toLocaleString('en-US', {minimumFractionDigits: 4, maximumFractionDigits: 4}),
+                    BNB: parseFloat(priceMap['BNBUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+                    SOL: parseFloat(priceMap['SOLUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
                     XRP: parseFloat(priceMap['XRPUSDT']).toLocaleString('en-US', {minimumFractionDigits: 4, maximumFractionDigits: 4}),
+                    DOGE: parseFloat(priceMap['DOGEUSDT']).toLocaleString('en-US', {minimumFractionDigits: 4, maximumFractionDigits: 4}),
+                    ADA: parseFloat(priceMap['ADAUSDT']).toLocaleString('en-US', {minimumFractionDigits: 4, maximumFractionDigits: 4}),
+                    AVAX: parseFloat(priceMap['AVAXUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+                    DOT: parseFloat(priceMap['DOTUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+                    LINK: parseFloat(priceMap['LINKUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
                 });
             } catch (e) { console.error(e); }
         };
@@ -89,7 +98,7 @@ function App() {
         WebApp.sendData(JSON.stringify(payload));
     };
 
-    const marqueeContent = displayCoins.map(sym => `🔥 ${sym}: $${(prices as any)[sym] || '...'}`).join('   |   ');
+    const marqueeContent = displayCoins.map(sym => `🔥 ${sym}: $${prices[sym] || '...'}`).join('   |   ');
 
     return (
         <div className="h-screen w-full bg-gray-50 font-sans text-black flex flex-col overflow-hidden relative">
@@ -97,9 +106,9 @@ function App() {
             {/* CSS TỔNG HỢP (ANIMATION AVATAR + TICKER) */}
             <style>{`
                 /* Ticker */
-                @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-                .marquee-wrapper { display: block; width: 100%; overflow: hidden; white-space: nowrap; }
-                .marquee-content { display: inline-block; padding-left: 100%; animation: marquee 25s linear infinite; }
+                @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+                .marquee-wrapper { display: block; width: 100%; overflow: hidden; white-space: nowrap; box-sizing: border-box; }
+                .marquee-content { display: inline-block; padding-left: 100%; animation: scroll 25s linear infinite; }
                 
                 /* Pulse Border Cảnh báo */
                 @keyframes pulse-border-powerful {
@@ -146,11 +155,12 @@ function App() {
             </div>
 
             {/* KHU VỰC NỘI DUNG CHÍNH (CÓ THỂ CUỘN) */}
-            <div className="flex-grow overflow-y-auto pb-24 p-4">
+            <div className="flex-grow overflow-y-auto pb-24 p-4 block">
                 
                 {/* HIỂN THỊ TAB: GIAO DỊCH */}
                 {activeTab === 'trade' && (
-                    <div className="flex flex-col gap-4">
+                    <div className="w-full max-w-md mx-auto flex flex-col gap-4 block">
+                        
                         {/* 1. THANH TICKER CHẠY TOP 10 COIN */}
                         <div className="w-full bg-gray-900 py-3 rounded-xl border border-gray-800 shadow-md">
                             <div className="marquee-wrapper">
@@ -179,7 +189,9 @@ function App() {
                         </div>
 
                         {/* 3. FORM GIAO DỊCH */}
-                        <div className="bg-white p-5 sm:p-6 rounded-3xl shadow-lg border border-gray-100 mt-2">
+                        <div className="w-full bg-white p-5 sm:p-6 rounded-3xl shadow-lg border border-gray-100 mt-2 block">
+                            
+                            {/* HAI NÚT BÁO GIÁ NỘI BỘ TO */}
                             <label className="block text-sm font-bold mb-3 text-gray-700">1. Chọn dự án:</label>
                             <div className="w-full grid grid-cols-2 gap-3 mb-5">
                                 <button onClick={() => setPlatform('SWC')} className={`p-4 rounded-2xl text-center shadow-sm transition-all duration-200 ${platform === 'SWC' ? 'bg-blue-600 text-white scale-105 ring-4 ring-blue-200' : 'bg-gray-100 text-gray-500'}`}>
@@ -221,7 +233,7 @@ function App() {
 
                 {/* HIỂN THỊ TAB: LỊCH SỬ */}
                 {activeTab === 'history' && (
-                    <div className="flex flex-col gap-4 animate-fade-in">
+                    <div className="flex flex-col gap-4 animate-fade-in max-w-md mx-auto">
                         <h2 className="text-lg font-black text-gray-800 px-2">Lịch sử giao dịch gần đây</h2>
                         {MOCK_HISTORY.map((tx) => (
                             <div key={tx.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
