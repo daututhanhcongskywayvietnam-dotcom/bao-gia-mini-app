@@ -30,7 +30,6 @@ function App() {
         
         const fetchPrices = async () => {
             try {
-                // Lấy 1 lần Top 10 Coin từ Binance
                 const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbols=${JSON.stringify(top10Symbols)}`);
                 const data = await response.json();
                 
@@ -53,7 +52,7 @@ function App() {
         };
 
         fetchPrices();
-        const interval = setInterval(fetchPrices, 10000); // Tự động cập nhật 10s/lần
+        const interval = setInterval(fetchPrices, 10000);
         return () => clearInterval(interval);
     }, []);
 
@@ -82,18 +81,19 @@ function App() {
     const marqueeContent = displayCoins.map(sym => `🔥 ${sym}: $${prices[sym]}`).join('   |   ');
 
     return (
-        <div className="min-h-screen w-full flex flex-col bg-gray-50 font-sans text-black relative">
+        <div className="min-h-screen w-full bg-gray-50 font-sans text-black relative pb-10">
             
-            {/* CSS TÙY CHỈNH CHO HIỆU ỨNG */}
             <style>{`
                 @keyframes scroll {
-                    0% { transform: translateX(100%); }
-                    100% { transform: translateX(-100%); }
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-50%); }
                 }
-                .animate-marquee-advanced {
-                    display: inline-block;
+                .marquee-container {
+                    display: flex;
                     white-space: nowrap;
-                    animation: scroll 25s linear infinite;
+                    width: 200%;
+                    animation: scroll 20s linear infinite;
+                    will-change: transform;
                 }
                 @keyframes pulse-border-powerful {
                     0%, 100% { border-color: #fca5a5; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2); }
@@ -104,17 +104,18 @@ function App() {
                 }
             `}</style>
 
-            <div className="w-full max-w-md mx-auto p-4 pt-6 flex-grow flex flex-col">
+            <div className="w-full max-w-md mx-auto p-4 flex flex-col gap-4">
                 
-                {/* 1. THANH TICKER CHẠY TOP 10 COIN (NẰM TRÊN CÙNG) */}
-                <div className="bg-gray-900 text-green-400 text-xs py-3 overflow-hidden w-full flex items-center mb-4 font-mono rounded-xl shadow-inner border-2 border-gray-800">
-                    <div className="animate-marquee-advanced font-bold tracking-wide">
-                        {marqueeContent} &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; {marqueeContent}
+                {/* 1. THANH TICKER CHẠY TOP 10 COIN */}
+                <div className="bg-gray-900 text-green-400 text-xs py-3 overflow-hidden w-full rounded-xl shadow-inner border-2 border-gray-800 shrink-0">
+                    <div className="marquee-container font-mono font-bold tracking-wide">
+                        <span className="w-1/2 flex justify-around pr-4">{marqueeContent}</span>
+                        <span className="w-1/2 flex justify-around pr-4">{marqueeContent}</span>
                     </div>
                 </div>
 
                 {/* 2. BỐN KHỐI BÁO GIÁ CRYPTO TO */}
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-2 gap-4 shrink-0">
                     {[
                         { sym: 'BTC', p: prices.BTC, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/btc.png' },
                         { sym: 'ETH', p: prices.ETH, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/eth.png' },
@@ -131,10 +132,10 @@ function App() {
                     ))}
                 </div>
 
-                {/* FORM GIAO DỊCH TỔNG HỢP */}
-                <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 flex-grow flex flex-col">
+                {/* KHỐI FORM GIAO DỊCH TỔNG HỢP */}
+                <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 flex flex-col shrink-0">
                     
-                    {/* 3. HAI NÚT BÁO GIÁ NỘI BỘ TO (CÓ THỂ BẤM CHỌN LUÔN) */}
+                    {/* 3. HAI NÚT BÁO GIÁ NỘI BỘ TO */}
                     <label className="block text-sm font-bold mb-2 text-gray-700">1. Chọn dự án:</label>
                     <div className="grid grid-cols-2 gap-4 mb-5">
                         <button onClick={() => setPlatform('SWC')} className={`bg-blue-600 text-white p-4 rounded-2xl text-center shadow-md transform transition-transform active:scale-95 ${platform === 'SWC' ? 'ring-4 ring-blue-300 scale-[1.02]' : 'opacity-90'}`}>
@@ -147,7 +148,7 @@ function App() {
                         </button>
                     </div>
 
-                    {/* 4. FORM NHẬP THÔNG TIN */}
+                    {/* 4. FORM NHẬP THÔNG TIN & TÍNH TIỀN */}
                     <label className="block text-sm font-bold mb-2 text-gray-700">2. Số lượng USD muốn mua:</label>
                     <input 
                         type="number" 
@@ -171,7 +172,7 @@ function App() {
                         {totalVND} <span className="text-xl font-bold text-green-600">VNĐ</span>
                     </div>
 
-                    {/* 5. KHUNG CẢNH BÁO NHẤP NHÁY */}
+                    {/* 5. KHUNG CẢNH BÁO NHẤP NHÁY MẠNH */}
                     <div className="alert-box-powerful bg-red-50 border-2 border-red-200 text-red-900 p-4 rounded-xl text-center leading-relaxed font-semibold mb-6 flex items-start">
                         <span className="text-3xl mr-3 mt-1">🚨</span>
                         <div className="text-xs text-left">
@@ -182,7 +183,7 @@ function App() {
                     </div>
 
                     {/* 6. NÚT SUBMIT LẤY MÃ QR */}
-                    <button onClick={handleSendData} className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-transform flex justify-center items-center text-lg mt-auto">
+                    <button onClick={handleSendData} className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-transform flex justify-center items-center text-lg">
                         <span className="text-2xl mr-2">💳</span> LẤY MÃ QR NGAY
                     </button>
                 </div>
