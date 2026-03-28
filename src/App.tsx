@@ -3,7 +3,7 @@ import WebApp from '@twa-dev/sdk';
 
 // Định nghĩa kiểu dữ liệu
 interface CryptoPrices {
-    BTC: string; ETH: string; DOGE: string; XRP: string;
+    BTC: string; ETH: string; BNB: string; XRP: string; DOGE: string; LINK: string; CAKE: string;
 }
 
 interface Transaction {
@@ -22,15 +22,16 @@ function App() {
     const [amount, setAmount] = useState('');
     const [platform, setPlatform] = useState('SWC');
     const [gmail, setGmail] = useState('');
-    const [prices, setPrices] = useState<Record<string, string>>({
-        BTC: '...', ETH: '...', BNB: '...', SOL: '...', XRP: '...', 
-        DOGE: '...', ADA: '...', AVAX: '...', DOT: '...', LINK: '...'
+    
+    // State lưu giá 7 Coin Sếp yêu cầu
+    const [prices, setPrices] = useState<CryptoPrices>({
+        BTC: '...', ETH: '...', BNB: '...', XRP: '...', DOGE: '...', LINK: '...', CAKE: '...'
     });
     
     // Lưu thông tin User Telegram
     const [tgUser, setTgUser] = useState({
         name: 'Khách Hàng',
-        avatar: 'https://i.pravatar.cc/150?img=11', // Ảnh mặc định nếu k có
+        avatar: 'https://i.pravatar.cc/150?img=11', 
         rank: 'Thành Viên'
     });
 
@@ -39,8 +40,9 @@ function App() {
     const rateRSW = parseFloat(urlParams.get('rsw') || '27.0');
     const rates: Record<string, number> = { SWC: rateSWC, RSW: rateRSW };
 
-    const top10Symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT", "ADAUSDT", "AVAXUSDT", "DOTUSDT", "LINKUSDT"];
-    const displayCoins = ["BTC", "ETH", "BNB", "SOL", "XRP", "DOGE", "ADA", "AVAX", "DOT", "LINK"];
+    // Danh sách symbol và coin hiển thị
+    const displayCoins = ["BTC", "ETH", "BNB", "XRP", "DOGE", "LINK", "CAKE"];
+    const binanceSymbols = displayCoins.map(coin => coin + "USDT");
 
     useEffect(() => {
         WebApp.ready();
@@ -51,31 +53,37 @@ function App() {
         if (user) {
             setTgUser({
                 name: user.first_name || 'Khách Hàng',
-                avatar: user.photo_url || 'https://i.pravatar.cc/150?img=11',
+                avatar: user.photo_url || 'https://photos.app.goo.gl/CZUUKXM1gCSdxQCVA',
                 rank: 'Thành Viên' 
             });
         }
 
         const fetchPrices = async () => {
             try {
-                const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbols=${JSON.stringify(top10Symbols)}`);
+                // Đã Fix lỗi mất giá: Dùng encodeURIComponent để mã hóa ngoặc vuông cho mượt trên iOS
+                const url = `https://api.binance.com/api/v3/ticker/price?symbols=${encodeURIComponent(JSON.stringify(binanceSymbols))}`;
+                const response = await fetch(url);
                 const data = await response.json();
+                
                 const priceMap: any = {};
                 data.forEach((item: any) => { priceMap[item.symbol] = item.price; });
 
+                // Hàm format giá an toàn, chống NaN
+                const formatP = (priceStr: string | undefined, decimals: number) => {
+                    if (!priceStr) return '...';
+                    return parseFloat(priceStr).toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
+                };
+
                 setPrices({
-                    BTC: parseFloat(priceMap['BTCUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
-                    ETH: parseFloat(priceMap['ETHUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
-                    BNB: parseFloat(priceMap['BNBUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
-                    SOL: parseFloat(priceMap['SOLUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
-                    XRP: parseFloat(priceMap['XRPUSDT']).toLocaleString('en-US', {minimumFractionDigits: 4, maximumFractionDigits: 4}),
-                    DOGE: parseFloat(priceMap['DOGEUSDT']).toLocaleString('en-US', {minimumFractionDigits: 4, maximumFractionDigits: 4}),
-                    ADA: parseFloat(priceMap['ADAUSDT']).toLocaleString('en-US', {minimumFractionDigits: 4, maximumFractionDigits: 4}),
-                    AVAX: parseFloat(priceMap['AVAXUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
-                    DOT: parseFloat(priceMap['DOTUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
-                    LINK: parseFloat(priceMap['LINKUSDT']).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+                    BTC: formatP(priceMap['BTCUSDT'], 2),
+                    ETH: formatP(priceMap['ETHUSDT'], 2),
+                    BNB: formatP(priceMap['BNBUSDT'], 2),
+                    XRP: formatP(priceMap['XRPUSDT'], 4),
+                    DOGE: formatP(priceMap['DOGEUSDT'], 4),
+                    LINK: formatP(priceMap['LINKUSDT'], 2),
+                    CAKE: formatP(priceMap['CAKEUSDT'], 3), // Để 3 số thập phân cho chuẩn
                 });
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Lỗi lấy giá Binance:", e); }
         };
 
         fetchPrices();
@@ -98,12 +106,13 @@ function App() {
         WebApp.sendData(JSON.stringify(payload));
     };
 
-    const marqueeContent = displayCoins.map(sym => `🔥 ${sym}: $${prices[sym] || '...'}`).join('   |   ');
+    // Chuỗi nội dung chạy Marquee 7 Coin
+    const marqueeContent = displayCoins.map(sym => `🔥 ${sym}: $${(prices as any)[sym] || '...'}`).join('   |   ');
 
     return (
         <div className="h-screen w-full bg-gray-50 font-sans text-black flex flex-col overflow-hidden relative">
             
-            {/* CSS TỔNG HỢP (ANIMATION AVATAR + TICKER) */}
+            {/* CSS TỔNG HỢP */}
             <style>{`
                 /* Ticker */
                 @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
@@ -122,22 +131,24 @@ function App() {
                 .avatar-glow-container { position: relative; display: inline-block; border-radius: 50%; }
                 .avatar-glow-container::before {
                     content: ''; position: absolute; inset: -4px; border-radius: 50%;
-                    border: 2px dashed #38bdf8; /* Màu xanh nhạt phát sáng */
+                    border: 2px dashed #38bdf8; 
                     animation: spin-slow 8s linear infinite;
                     filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.8));
                     z-index: 0;
                 }
             `}</style>
 
-            {/* HEADER DARK MODE XỊN XÒ (CỐ ĐỊNH TRÊN CÙNG) */}
+            {/* HEADER DARK MODE XỊN XÒ */}
             <div className="w-full bg-gray-950 text-white p-4 flex justify-between items-center rounded-b-3xl shadow-xl z-20 shrink-0 border-b border-gray-800">
-                {/* Góc trái: Logo & Tên App */}
+                {/* Góc trái: Chèn Logo Sếp vừa gửi vào đây */}
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-800 rounded-full flex items-center justify-center font-black text-xs border border-red-500 shadow-[0_0_10px_rgba(220,38,38,0.5)]">
-                        SWC
-                    </div>
+                    <img 
+                        src="https://i.ibb.co/L9gZkYn/logo-swc.png" /* Thay link ảnh Logo SWC PASS của Sếp vào chỗ này nếu muốn đổi */
+                        alt="SWC Logo" 
+                        className="w-10 h-10 rounded-full border border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] object-cover bg-white" 
+                    />
                     <div className="flex flex-col">
-                        <span className="font-black text-yellow-400 text-sm tracking-wide">TRỢ LÝ USDT</span>
+                        <span className="font-black text-blue-400 text-sm tracking-wide">TRỢ LÝ USDT</span>
                         <span className="text-[10px] text-gray-400">Nạp rút hỏa tốc</span>
                     </div>
                 </div>
@@ -149,7 +160,7 @@ function App() {
                         <span className="text-[10px] text-blue-400 font-semibold">{tgUser.rank}</span>
                     </div>
                     <div className="avatar-glow-container w-10 h-10">
-                        <img src={tgUser.avatar} alt="Avatar" className="w-full h-full rounded-full object-cover relative z-10 border border-gray-700" />
+                        <img src={tgUser.avatar} alt="Avatar" className="w-full h-full rounded-full object-cover relative z-10 border border-gray-700 bg-gray-800" />
                     </div>
                 </div>
             </div>
@@ -161,7 +172,7 @@ function App() {
                 {activeTab === 'trade' && (
                     <div className="w-full max-w-md mx-auto flex flex-col gap-4 block">
                         
-                        {/* 1. THANH TICKER CHẠY TOP 10 COIN */}
+                        {/* 1. THANH TICKER CHẠY COIN */}
                         <div className="w-full bg-gray-900 py-3 rounded-xl border border-gray-800 shadow-md">
                             <div className="marquee-wrapper">
                                 <div className="marquee-content text-green-400 font-mono text-xs font-bold tracking-wide">
@@ -170,7 +181,7 @@ function App() {
                             </div>
                         </div>
 
-                        {/* 2. BỐN KHỐI BÁO GIÁ CRYPTO TO */}
+                        {/* 2. BỐN KHỐI BÁO GIÁ CRYPTO TO (BTC, ETH, DOGE, XRP) */}
                         <div className="w-full grid grid-cols-2 gap-3">
                             {[
                                 { sym: 'BTC', p: prices.BTC, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/btc.png' },
@@ -188,10 +199,9 @@ function App() {
                             ))}
                         </div>
 
-                        {/* 3. FORM GIAO DỊCH */}
+                        {/* 3. FORM GIAO DỊCH TỔNG HỢP */}
                         <div className="w-full bg-white p-5 sm:p-6 rounded-3xl shadow-lg border border-gray-100 mt-2 block">
                             
-                            {/* HAI NÚT BÁO GIÁ NỘI BỘ TO */}
                             <label className="block text-sm font-bold mb-3 text-gray-700">1. Chọn dự án:</label>
                             <div className="w-full grid grid-cols-2 gap-3 mb-5">
                                 <button onClick={() => setPlatform('SWC')} className={`p-4 rounded-2xl text-center shadow-sm transition-all duration-200 ${platform === 'SWC' ? 'bg-blue-600 text-white scale-105 ring-4 ring-blue-200' : 'bg-gray-100 text-gray-500'}`}>
