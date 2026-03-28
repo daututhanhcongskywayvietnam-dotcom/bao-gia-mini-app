@@ -86,17 +86,15 @@ function App() {
 
     // Style chung để ép cứng Light Mode cho ô nhập liệu
     const inputStyle = {
-        color: '#000000', // Chữ đen bóng
-        backgroundColor: '#ffffff', // Nền trắng tinh
-        WebkitTextFillColor: '#000000', // Sửa lỗi iOS Dark Mode
+        color: '#000000', 
+        backgroundColor: '#ffffff', 
+        WebkitTextFillColor: '#000000', 
         opacity: 1
     };
 
     return (
-        /* CONTAINER CHÍNH - ÉP GIỮA TUYỆT ĐỐI */
         <div className="min-h-screen w-full flex flex-col items-center justify-start bg-gray-50 font-sans overflow-x-hidden" style={{ color: '#000' }}>
             
-            {/* VÙNG CHỨA NỘI DUNG - CHIẾM 92% CHIỀU RỘNG MÀN HÌNH ĐỂ CÂN ĐỀU 2 BÊN */}
             <div className="w-[92%] max-w-md mx-auto flex flex-col items-center pt-4 pb-10">
                 
                 {/* 📊 BẢNG TỶ GIÁ VNĐ NỘI BỘ */}
@@ -116,25 +114,33 @@ function App() {
                     </div>
                 </div>
 
-                {/* 📈 BẢNG TỶ GIÁ THỊ TRƯỜNG CRYPTO */}
+                {/* 📈 BẢNG TỶ GIÁ THỊ TRƯỜNG CRYPTO (CÓ ICON LOGO) */}
                 <div className="w-full mb-6">
                     <h3 className="text-sm font-bold text-gray-800 mb-2 flex items-center justify-center gap-1.5">
-                        📈 Thị trường (Live)
+                        📈 Thị trường Crypto (Live)
                     </h3>
                     <div className="grid grid-cols-4 gap-2 w-full">
+                        {/* Box BTC */}
                         <div className="bg-white p-2 rounded-xl border border-gray-100 flex flex-col items-center justify-center shadow-sm">
+                            <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" alt="BTC" className="w-6 h-6 mb-1 drop-shadow-sm" />
                             <span className="text-[9px] text-gray-500 font-bold mb-0.5">BTC</span>
                             <span className="text-[11px] font-extrabold text-gray-900">${prices.BTC}</span>
                         </div>
+                        {/* Box ETH */}
                         <div className="bg-white p-2 rounded-xl border border-gray-100 flex flex-col items-center justify-center shadow-sm">
+                            <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="ETH" className="w-6 h-6 mb-1 drop-shadow-sm" />
                             <span className="text-[9px] text-gray-500 font-bold mb-0.5">ETH</span>
                             <span className="text-[11px] font-extrabold text-gray-900">${prices.ETH}</span>
                         </div>
+                        {/* Box DOGE */}
                         <div className="bg-white p-2 rounded-xl border border-gray-100 flex flex-col items-center justify-center shadow-sm">
+                            <img src="https://cryptologos.cc/logos/dogecoin-doge-logo.png" alt="DOGE" className="w-6 h-6 mb-1 drop-shadow-sm" />
                             <span className="text-[9px] text-gray-500 font-bold mb-0.5">DOGE</span>
                             <span className="text-[11px] font-extrabold text-gray-900">${prices.DOGE}</span>
                         </div>
+                        {/* Box XRP */}
                         <div className="bg-white p-2 rounded-xl border border-gray-100 flex flex-col items-center justify-center shadow-sm">
+                            <img src="https://cryptologos.cc/logos/xrp-xrp-logo.png" alt="XRP" className="w-6 h-6 mb-1 drop-shadow-sm" />
                             <span className="text-[9px] text-gray-500 font-bold mb-0.5">XRP</span>
                             <span className="text-[11px] font-extrabold text-gray-900">${prices.XRP}</span>
                         </div>
@@ -178,7 +184,7 @@ function App() {
                         />
                     </div>
 
-                    {/* Ô TÍNH TỔNG TIỀN TỰ ĐỘNG - CHỐT HẠ THEO YÊU CẦU */}
+                    {/* Ô TÍNH TỔNG TIỀN TỰ ĐỘNG */}
                     <div className="mb-8 w-full">
                         <label className="block text-gray-700 font-bold mb-1.5 text-sm ml-1">3. Tổng tiền thanh toán (Dự kiến):</label>
                         <div className="w-full px-4 py-4 rounded-2xl border-2 border-green-200 bg-green-50 text-center font-extrabold text-green-700 text-2xl shadow-inner transition-all">
