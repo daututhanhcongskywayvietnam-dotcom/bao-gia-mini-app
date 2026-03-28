@@ -8,7 +8,7 @@ interface CryptoPrices {
 function App() {
     const [amount, setAmount] = useState('');
     const [platform, setPlatform] = useState('SWC');
-    const [gmail, setGmail] = useState(''); // Thêm state cho Gmail
+    const [gmail, setGmail] = useState('');
     const [prices, setPrices] = useState<CryptoPrices>({ BTC: '...', ETH: '...', DOGE: '...', XRP: '...' });
 
     // ĐỌC GIÁ TỪ BOT GỬI QUA URL
@@ -44,15 +44,14 @@ function App() {
 
     const totalVND = (Number(amount) * rates[platform] * 1000).toLocaleString('vi-VN');
 
-    // Nút Gửi dữ liệu: Gửi cả amount, platform và gmail
+    // KIỂM TRA ĐIỀU KIỆN & GỬI DỮ LIỆU
     const handleSendData = () => {
-        // [TÍNH NĂNG MỚI] Kiểm tra bắt buộc nhập
         if (!amount || Number(amount) <= 0) {
-            WebApp.showAlert("⚠️ Vui lòng nhập số lượng USD hợp lệ!");
+            WebApp.showAlert("⚠️ Sếp vui lòng nhập số lượng USD muốn giao dịch!");
             return;
         }
         if (!gmail.trim()) {
-            WebApp.showAlert("⚠️ Vui lòng nhập Gmail của bạn!");
+            WebApp.showAlert("⚠️ Sếp vui lòng nhập Gmail để nhận biên lai nhé!");
             return;
         }
 
@@ -65,77 +64,97 @@ function App() {
     };
 
     return (
-        <div className="min-h-screen w-full flex flex-col items-center bg-gray-50 p-4 font-sans text-black">
-            <div className="w-full max-w-md">
-                
-                {/* TỶ GIÁ NỘI BỘ */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                    <div className="bg-blue-600 text-white p-3 rounded-2xl text-center shadow-lg">
-                        <p className="text-[10px] font-bold opacity-80 uppercase">Giá Quỹ SWC</p>
-                        <p className="text-xl font-black">{rateSWC}</p>
+        <div className="min-h-screen w-full flex flex-col bg-gray-50 font-sans text-black relative">
+            
+            {/* THÊM CSS CHO CHỮ CHẠY & HIỆU ỨNG NHẤP NHÁY MẠNH */}
+            <style>{`
+                @keyframes scroll {
+                    0% { transform: translateX(100%); }
+                    100% { transform: translateX(-100%); }
+                }
+                .animate-marquee {
+                    display: inline-block;
+                    white-space: nowrap;
+                    animation: scroll 15s linear infinite;
+                }
+                @keyframes pulse-border {
+                    0%, 100% { border-color: #fca5a5; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+                    50% { border-color: #ef4444; box-shadow: 0 0 10px 2px rgba(239, 68, 68, 0.8); }
+                }
+                .alert-box {
+                    animation: pulse-border 1.5s infinite;
+                }
+            `}</style>
+
+            {/* THANH TIÊU ĐỀ CỐ ĐỊNH (GIÁ QUỸ) */}
+            <div className="bg-white shadow-md z-10 sticky top-0 left-0 w-full border-b border-gray-200">
+                <div className="flex justify-between items-center p-4">
+                    <div className="flex flex-col items-start">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Giá Quỹ SWC</span>
+                        <span className="text-xl font-black text-blue-600">{rateSWC}</span>
                     </div>
-                    <div className="bg-red-600 text-white p-3 rounded-2xl text-center shadow-lg">
-                        <p className="text-[10px] font-bold opacity-80 uppercase">Giá Quỹ RSW</p>
-                        <p className="text-xl font-black">{rateRSW}</p>
+                    <div className="h-8 w-px bg-gray-200"></div>
+                    <div className="flex flex-col items-end">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Giá Quỹ RSW</span>
+                        <span className="text-xl font-black text-red-600">{rateRSW}</span>
                     </div>
                 </div>
 
-                {/* TỶ GIÁ CRYPTO LIVE - CHIA 2 HÀNG & MÀU XANH */}
-                <div className="grid grid-cols-2 gap-3 mb-6"> 
-                    {[
-                        { sym: 'BTC', p: prices.BTC, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/btc.png' },
-                        { sym: 'ETH', p: prices.ETH, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/eth.png' },
-                        { sym: 'DOGE', p: prices.DOGE, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/doge.png' },
-                        { sym: 'XRP', p: prices.XRP, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/xrp.png' }
-                    ].map(coin => (
-                        <div key={coin.sym} className="bg-white border border-gray-100 p-3 rounded-xl flex items-center shadow-sm">
-                            <img src={coin.img} className="w-8 h-8 mr-3" alt={coin.sym} />
-                            <div className="flex flex-col">
-                                <span className="text-sm font-bold text-gray-500">{coin.sym}</span>
-                                {/* Số hiển thị to hơn và màu xanh thị trường */}
-                                <span className="text-lg font-black text-green-500">${coin.p}</span>
-                            </div>
-                        </div>
-                    ))}
+                {/* THANH CHẠY GIÁ COIN (MARQUEE) */}
+                <div className="bg-gray-900 text-green-400 text-xs py-2 overflow-hidden w-full border-t border-gray-800 flex items-center font-mono">
+                    <div className="animate-marquee font-bold tracking-wide">
+                        🔥 BTC: ${prices.BTC} &nbsp;&nbsp;&nbsp; 🚀 ETH: ${prices.ETH} &nbsp;&nbsp;&nbsp; 🐕 DOGE: ${prices.DOGE} &nbsp;&nbsp;&nbsp; 💧 XRP: ${prices.XRP} &nbsp;&nbsp;&nbsp; 
+                        🔥 BTC: ${prices.BTC} &nbsp;&nbsp;&nbsp; 🚀 ETH: ${prices.ETH} &nbsp;&nbsp;&nbsp; 🐕 DOGE: ${prices.DOGE} &nbsp;&nbsp;&nbsp; 💧 XRP: ${prices.XRP}
+                    </div>
+                </div>
+            </div>
+
+            {/* PHẦN NỘI DUNG CHÍNH */}
+            <div className="w-full max-w-md mx-auto p-4 pt-6 flex-grow flex flex-col">
+                
+                {/* KHUNG CẢNH BÁO NHẤP NHÁY LÀM NỔI BẬT */}
+                <div className="alert-box bg-red-50 border-2 rounded-xl p-4 mb-6 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-2 h-full bg-red-600"></div>
+                    <h3 className="text-red-700 font-black text-sm uppercase flex items-center mb-2">
+                        <span className="text-xl mr-2">🚨</span> Cảnh báo cực kỳ quan trọng!
+                    </h3>
+                    <p className="text-xs text-red-900 font-semibold leading-relaxed ml-2">
+                        • Chỉ giao dịch bằng <b>TÀI KHOẢN CHÍNH CHỦ</b>. Người mua chịu trách nhiệm 100% về nguồn tiền nếu xảy ra vấn đề pháp lý.<br/><br/>
+                        • Bắt buộc chuyển <b className="bg-yellow-200 text-red-700 px-1">ĐÚNG SỐ TÀI KHOẢN</b> và <b className="bg-yellow-200 text-red-700 px-1">ĐÚNG NỘI DUNG</b> yêu cầu in trên mã QR!
+                    </p>
                 </div>
 
                 {/* FORM GIAO DỊCH */}
-                <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
-                    <label className="block text-sm font-bold mb-2">1. Chọn dự án:</label>
-                    <select value={platform} onChange={(e) => setPlatform(e.target.value)} className="w-full p-3 mb-4 rounded-xl border-2 border-gray-100 font-bold bg-white outline-none">
+                <div className="bg-white p-5 rounded-3xl shadow-lg border border-gray-100 flex-grow">
+                    
+                    <label className="block text-sm font-bold mb-2 text-gray-700">1. Chọn dự án:</label>
+                    <select value={platform} onChange={(e) => setPlatform(e.target.value)} className="w-full p-4 mb-5 rounded-2xl border-2 border-gray-100 font-bold bg-gray-50 outline-none focus:border-blue-500 focus:bg-white transition-colors">
                         <option value="SWC">🔵 Quỹ SWC</option>
                         <option value="RSW">🔴 Quỹ RSW</option>
                     </select>
 
-                    <label className="block text-sm font-bold mb-2">2. Số lượng USD:</label>
-                    <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full p-3 mb-4 rounded-xl border-2 border-gray-100 font-bold outline-none text-center text-xl" placeholder="VD: 1000" style={{backgroundColor: '#fff', color: '#000'}} />
+                    <label className="block text-sm font-bold mb-2 text-gray-700">2. Số lượng USD:</label>
+                    <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full p-4 mb-5 rounded-2xl border-2 border-gray-100 font-black outline-none text-center text-2xl text-blue-600 bg-gray-50 focus:border-blue-500 focus:bg-white transition-colors placeholder-gray-300" placeholder="VD: 1000" />
 
-                    {/* TRƯỜNG NHẬP GMAIL MỚI */}
-                    <label className="block text-sm font-bold mb-2">3. Gmail của bạn:</label>
+                    <label className="block text-sm font-bold mb-2 text-gray-700">3. Gmail nhận biên lai:</label>
                     <input 
                         type="email" 
                         value={gmail} 
                         onChange={(e) => setGmail(e.target.value)} 
-                        className="w-full p-3 mb-4 rounded-xl border-2 border-gray-100 font-bold outline-none text-center text-lg" 
-                        placeholder="VD: sếp@gmail.com" 
-                        style={{backgroundColor: '#fff', color: '#000'}} 
+                        className="w-full p-4 mb-6 rounded-2xl border-2 border-gray-100 font-bold outline-none text-center text-lg text-gray-800 bg-gray-50 focus:border-blue-500 focus:bg-white transition-colors placeholder-gray-300" 
+                        placeholder="VD: sep@gmail.com" 
                     />
 
-                    <label className="block text-sm font-bold mb-2">4. Thành tiền (VNĐ):</label>
-                    <div className="w-full p-4 mb-6 rounded-xl bg-green-50 border-2 border-green-100 text-green-700 text-2xl font-black text-center shadow-inner">
-                        {totalVND}
+                    <label className="block text-sm font-bold mb-2 text-gray-700">4. Tổng tiền cần thanh toán:</label>
+                    <div className="w-full p-4 mb-6 rounded-2xl bg-green-50 border-2 border-green-200 text-green-700 text-3xl font-black text-center shadow-inner">
+                        {totalVND} <span className="text-lg font-bold text-green-600">VNĐ</span>
                     </div>
 
-                    <button onClick={handleSendData} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform mb-4">
-                        💰 LẤY MÃ QR THANH TOÁN
+                    <button onClick={handleSendData} className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-transform flex justify-center items-center text-lg mt-auto">
+                        <span className="text-2xl mr-2">💳</span> LẤY MÃ QR NGAY
                     </button>
-
-                    {/* [TÍNH NĂNG MỚI] GHI CHÚ BẮT BUỘC */}
-                    <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs p-4 rounded-xl text-center leading-relaxed">
-                        📌 <b>Lưu ý:</b> Chỉ giao dịch tài khoản chính chủ. Người mua chịu trách nhiệm 100% về nguồn tiền nếu xảy ra vấn đề pháp lý.<br/><br/>
-                        <b>Bắt buộc chuyển đúng nội dung yêu cầu hoặc QR đã in ra.</b>
-                    </div>
                 </div>
+
             </div>
         </div>
     );
