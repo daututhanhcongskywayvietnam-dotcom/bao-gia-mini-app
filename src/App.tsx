@@ -128,7 +128,7 @@ function App() {
                     
                     {/* 👇 1. SẾP DÁN LINK TRỰC TIẾP (DIRECT LINK) ẢNH LOGO VÀO CHỖ NÀY 👇 */}
                     <img 
-                        src="[![Do-Va-Va-ng-Ba-i-Da-ng-Facebook-Chu-c-Mu-ng-Te-t-Nguye-n-Da-n-Do-Ho-a.png](https://i.postimg.cc/nLf79FLk/Do-Va-Va-ng-Ba-i-Da-ng-Facebook-Chu-c-Mu-ng-Te-t-Nguye-n-Da-n-Do-Ho-a.png)](https://postimg.cc/4YwnrTV7)" /* Thay link Google Photos bằng link up lên Postimages/Imgbb */
+                        src="https://i.postimg.cc/nLf79FLk/Do-Va-Va-ng-Ba-i-Da-ng-Facebook-Chu-c-Mu-ng-Te-t-Nguye-n-Da-n-Do-Ho-a.png](https://i.postimg.cc/nLf79FLk/Do-Va-Va-ng-Ba-i-Da-ng-Facebook-Chu-c-Mu-ng-Te-t-Nguye-n-Da-n-Do-Ho-a.png)](https://postimg.cc/4YwnrTV7)" /* Thay link Google Photos bằng link up lên Postimages/Imgbb */
                         alt="SWC Logo" 
                         className="w-10 h-10 rounded-full border border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] object-cover bg-white" 
                     />
