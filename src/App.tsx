@@ -58,7 +58,7 @@ function App() {
 
     const totalVND = (Number(amount) * rates[platform] * 1000).toLocaleString('vi-VN');
 
-    // KIỂM TRA ĐIỀU KIỆN & GỬI DỮ LIỆU CHUẨN XÁC
+    // KIỂM TRA ĐIỀU KIỆN & GỬI DỮ LIỆU
     const handleSendData = () => {
         if (!amount || Number(amount) <= 0) {
             WebApp.showAlert("⚠️ Sếp vui lòng nhập số lượng USD hợp lệ!");
@@ -82,28 +82,6 @@ function App() {
 
     return (
         <div className="min-h-screen w-full bg-gray-50 font-sans text-black relative pb-10">
-            
-            <style>{`
-                @keyframes scroll {
-                    0% { transform: translateX(0); }
-                    100% { transform: translateX(-50%); }
-                }
-                .marquee-container {
-                    display: flex;
-                    white-space: nowrap;
-                    width: 200%;
-                    animation: scroll 20s linear infinite;
-                    will-change: transform;
-                }
-                @keyframes pulse-border-powerful {
-                    0%, 100% { border-color: #fca5a5; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2); }
-                    50% { border-color: #ef4444; box-shadow: 0 0 15px 5px rgba(239, 68, 68, 0.6); }
-                }
-                .alert-box-powerful {
-                    animation: pulse-border-powerful 1.2s infinite;
-                }
-            `}</style>
-
             <div className="w-full max-w-md mx-auto p-4 flex flex-col gap-4">
                 
                 {/* 1. THANH TICKER CHẠY TOP 10 COIN */}
