@@ -21,7 +21,6 @@ function App() {
 
     // Danh sách symbol gửi lên Binance API
     const top10Symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT", "ADAUSDT", "AVAXUSDT", "DOTUSDT", "LINKUSDT"];
-    // Danh sách hiển thị
     const displayCoins = ["BTC", "ETH", "BNB", "SOL", "XRP", "DOGE", "ADA", "AVAX", "DOT", "LINK"];
 
     useEffect(() => {
@@ -58,7 +57,6 @@ function App() {
 
     const totalVND = (Number(amount) * rates[platform] * 1000).toLocaleString('vi-VN');
 
-    // KIỂM TRA ĐIỀU KIỆN & GỬI DỮ LIỆU
     const handleSendData = () => {
         if (!amount || Number(amount) <= 0) {
             WebApp.showAlert("⚠️ Sếp vui lòng nhập số lượng USD hợp lệ!");
@@ -77,45 +75,75 @@ function App() {
         WebApp.sendData(JSON.stringify(payload));
     };
 
-    // Chuỗi nội dung chạy Marquee
+    // Chuỗi nội dung chạy Marquee dài ra để không bị đứt quãng
     const marqueeContent = displayCoins.map(sym => `🔥 ${sym}: $${prices[sym]}`).join('   |   ');
 
     return (
-        <div className="min-h-screen w-full bg-gray-50 font-sans text-black relative pb-10">
-            <div className="w-full max-w-md mx-auto p-4 flex flex-col gap-4">
+        <div className="min-h-screen w-full bg-gray-50 font-sans text-black overflow-y-auto pb-12">
+            
+            {/* CSS CHUẨN ĐỂ CHỐNG VỠ GIAO DIỆN */}
+            <style>{`
+                .marquee-wrapper {
+                    display: block;
+                    width: 100%;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    box-sizing: border-box;
+                }
+                .marquee-content {
+                    display: inline-block;
+                    padding-left: 100%;
+                    animation: marquee 25s linear infinite;
+                }
+                @keyframes marquee {
+                    0% { transform: translate(0, 0); }
+                    100% { transform: translate(-100%, 0); }
+                }
+                @keyframes pulse-border-powerful {
+                    0%, 100% { border-color: #fca5a5; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2); }
+                    50% { border-color: #ef4444; box-shadow: 0 0 15px 5px rgba(239, 68, 68, 0.6); }
+                }
+                .alert-box-powerful {
+                    animation: pulse-border-powerful 1.2s infinite;
+                }
+            `}</style>
+
+            {/* CONTAINER CỐ ĐỊNH CHIỀU RỘNG, KHÔNG DÙNG FLEX-COL ĐỂ CHỐNG ÉP CHIỀU CAO */}
+            <div className="w-full max-w-md mx-auto p-4 block">
                 
-                {/* 1. THANH TICKER CHẠY TOP 10 COIN */}
-                <div className="bg-gray-900 text-green-400 text-xs py-3 overflow-hidden w-full rounded-xl shadow-inner border-2 border-gray-800 shrink-0">
-                    <div className="marquee-container font-mono font-bold tracking-wide">
-                        <span className="w-1/2 flex justify-around pr-4">{marqueeContent}</span>
-                        <span className="w-1/2 flex justify-around pr-4">{marqueeContent}</span>
+                {/* 1. THANH TICKER CHẠY TOP 10 COIN (NẰM TRÊN CÙNG) */}
+                <div className="w-full bg-gray-900 py-3 rounded-xl border-2 border-gray-800 shadow-lg mb-5">
+                    <div className="marquee-wrapper">
+                        <div className="marquee-content text-green-400 font-mono text-xs font-bold tracking-wide">
+                            {marqueeContent} &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; {marqueeContent}
+                        </div>
                     </div>
                 </div>
 
                 {/* 2. BỐN KHỐI BÁO GIÁ CRYPTO TO */}
-                <div className="grid grid-cols-2 gap-4 shrink-0">
+                <div className="w-full grid grid-cols-2 gap-4 mb-6">
                     {[
                         { sym: 'BTC', p: prices.BTC, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/btc.png' },
                         { sym: 'ETH', p: prices.ETH, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/eth.png' },
                         { sym: 'DOGE', p: prices.DOGE, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/doge.png' },
                         { sym: 'XRP', p: prices.XRP, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/xrp.png' }
                     ].map(coin => (
-                        <div key={coin.sym} className="bg-white border-2 border-gray-100 p-4 rounded-2xl flex flex-col justify-center items-center shadow-sm">
-                            <div className="flex items-center mb-1">
-                                <img src={coin.img} className="w-6 h-6 mr-2" alt={coin.sym} />
+                        <div key={coin.sym} className="bg-white border-2 border-gray-100 p-4 rounded-2xl block text-center shadow-sm">
+                            <div className="flex items-center justify-center mb-2">
+                                <img src={coin.img} className="w-6 h-6 mr-2 block" alt={coin.sym} />
                                 <span className="text-sm font-bold text-gray-500">{coin.sym}</span>
                             </div>
-                            <span className="text-xl font-black text-green-500">${coin.p}</span>
+                            <span className="text-xl font-black text-green-500 block">${coin.p}</span>
                         </div>
                     ))}
                 </div>
 
-                {/* KHỐI FORM GIAO DỊCH TỔNG HỢP */}
-                <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 flex flex-col shrink-0">
+                {/* 3. FORM GIAO DỊCH TỔNG HỢP */}
+                <div className="w-full bg-white p-5 sm:p-6 rounded-3xl shadow-xl border border-gray-100 block">
                     
-                    {/* 3. HAI NÚT BÁO GIÁ NỘI BỘ TO */}
-                    <label className="block text-sm font-bold mb-2 text-gray-700">1. Chọn dự án:</label>
-                    <div className="grid grid-cols-2 gap-4 mb-5">
+                    {/* HAI NÚT BÁO GIÁ NỘI BỘ TO */}
+                    <label className="block text-sm font-bold mb-3 text-gray-700">1. Chọn dự án:</label>
+                    <div className="w-full grid grid-cols-2 gap-4 mb-6">
                         <button onClick={() => setPlatform('SWC')} className={`bg-blue-600 text-white p-4 rounded-2xl text-center shadow-md transform transition-transform active:scale-95 ${platform === 'SWC' ? 'ring-4 ring-blue-300 scale-[1.02]' : 'opacity-90'}`}>
                             <p className="text-[11px] font-bold uppercase tracking-wider mb-1">Giá Quỹ SWC</p>
                             <p className="text-2xl font-black">{rateSWC}</p>
@@ -126,7 +154,7 @@ function App() {
                         </button>
                     </div>
 
-                    {/* 4. FORM NHẬP THÔNG TIN & TÍNH TIỀN */}
+                    {/* FORM NHẬP THÔNG TIN & TÍNH TIỀN */}
                     <label className="block text-sm font-bold mb-2 text-gray-700">2. Số lượng USD muốn mua:</label>
                     <input 
                         type="number" 
@@ -146,22 +174,22 @@ function App() {
                     />
 
                     <label className="block text-sm font-bold mb-2 text-gray-700">4. Tổng tiền cần thanh toán:</label>
-                    <div className="w-full p-4 mb-6 rounded-2xl bg-green-50 border-2 border-green-200 text-green-700 text-3xl font-black text-center shadow-inner">
+                    <div className="w-full p-4 mb-6 rounded-2xl bg-green-50 border-2 border-green-200 text-green-700 text-3xl font-black text-center shadow-inner block">
                         {totalVND} <span className="text-xl font-bold text-green-600">VNĐ</span>
                     </div>
 
-                    {/* 5. KHUNG CẢNH BÁO NHẤP NHÁY MẠNH */}
-                    <div className="alert-box-powerful bg-red-50 border-2 border-red-200 text-red-900 p-4 rounded-xl text-center leading-relaxed font-semibold mb-6 flex items-start">
+                    {/* KHUNG CẢNH BÁO NHẤP NHÁY MẠNH */}
+                    <div className="alert-box-powerful w-full bg-red-50 border-2 border-red-200 text-red-900 p-4 rounded-xl text-center leading-relaxed font-semibold mb-6 flex items-start">
                         <span className="text-3xl mr-3 mt-1">🚨</span>
                         <div className="text-xs text-left">
-                            <b className="text-red-700 text-sm uppercase">Cảnh báo cực kỳ quan trọng!</b><br/><br/>
+                            <b className="text-red-700 text-sm uppercase block mb-1">Cảnh báo cực kỳ quan trọng!</b>
                             • Chỉ giao dịch bằng <b>TÀI KHOẢN CHÍNH CHỦ</b>. Người mua chịu trách nhiệm 100% về nguồn tiền nếu xảy ra vấn đề pháp lý.<br/><br/>
                             • Bắt buộc chuyển <b className="bg-yellow-200 text-red-700 px-1 rounded">ĐÚNG NỘI DUNG</b> và <b className="bg-yellow-200 text-red-700 px-1 rounded">SỐ TÀI KHOẢN</b> yêu cầu in trên mã QR!
                         </div>
                     </div>
 
-                    {/* 6. NÚT SUBMIT LẤY MÃ QR */}
-                    <button onClick={handleSendData} className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-transform flex justify-center items-center text-lg">
+                    {/* NÚT SUBMIT LẤY MÃ QR */}
+                    <button onClick={handleSendData} className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-transform flex justify-center items-center text-lg block">
                         <span className="text-2xl mr-2">💳</span> LẤY MÃ QR NGAY
                     </button>
                 </div>
