@@ -46,10 +46,20 @@ function App() {
 
     // Nút Gửi dữ liệu: Gửi cả amount, platform và gmail
     const handleSendData = () => {
+        // [TÍNH NĂNG MỚI] Kiểm tra bắt buộc nhập
+        if (!amount || Number(amount) <= 0) {
+            WebApp.showAlert("⚠️ Vui lòng nhập số lượng USD hợp lệ!");
+            return;
+        }
+        if (!gmail.trim()) {
+            WebApp.showAlert("⚠️ Vui lòng nhập Gmail của bạn!");
+            return;
+        }
+
         const payload = {
             amount: Number(amount),
             platform,
-            gmail: gmail.trim() || 'Không cung cấp'
+            gmail: gmail.trim()
         };
         WebApp.sendData(JSON.stringify(payload));
     };
@@ -116,9 +126,15 @@ function App() {
                         {totalVND}
                     </div>
 
-                    <button onClick={handleSendData} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform">
+                    <button onClick={handleSendData} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform mb-4">
                         💰 LẤY MÃ QR THANH TOÁN
                     </button>
+
+                    {/* [TÍNH NĂNG MỚI] GHI CHÚ BẮT BUỘC */}
+                    <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs p-4 rounded-xl text-center leading-relaxed">
+                        📌 <b>Lưu ý:</b> Chỉ giao dịch tài khoản chính chủ. Người mua chịu trách nhiệm 100% về nguồn tiền nếu xảy ra vấn đề pháp lý.<br/><br/>
+                        <b>Bắt buộc chuyển đúng nội dung yêu cầu hoặc QR đã in ra.</b>
+                    </div>
                 </div>
             </div>
         </div>
