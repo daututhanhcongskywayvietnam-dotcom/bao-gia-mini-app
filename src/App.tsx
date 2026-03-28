@@ -3,18 +3,18 @@ import WebApp from '@twa-dev/sdk';
 
 // Định nghĩa kiểu dữ liệu
 interface CryptoPrices {
-    BTC: string; ETH: string; BNB: string; XRP: string; DOGE: string; LINK: string; CAKE: string;
+    BTC: string; ETH: string; BNB: string; XRP: string; DOGE: string; LINK: string; CAKE: string; ADA: string;
 }
 
 interface Transaction {
-    id: string; date: string; type: string; amountUSD: number; amountVND: string; status: string;
+    id: string; date: string; type: string; amountUSD: number; amountVND: string; status: 'Hoàn thành' | 'Bị huỷ';
 }
 
-// DỮ LIỆU LỊCH SỬ MẪU (UI)
+// DỮ LIỆU LỊCH SỬ MẪU (UI) - Đã thêm trạng thái Hoàn thành / Bị huỷ
 const MOCK_HISTORY: Transaction[] = [
-    { id: '#SWC102', date: '29/03/2026 14:30', type: 'Mua SWC', amountUSD: 1000, amountVND: '27.000.000', status: 'Thành công' },
-    { id: '#RSW098', date: '25/03/2026 09:15', type: 'Mua RSW', amountUSD: 500, amountVND: '13.500.000', status: 'Thành công' },
-    { id: '#SWC075', date: '10/03/2026 20:00', type: 'Mua SWC', amountUSD: 2000, amountVND: '54.000.000', status: 'Thành công' }
+    { id: '#SWC102', date: '29/03/2026 14:30', type: 'Mua SWC', amountUSD: 1000, amountVND: '27.000.000', status: 'Hoàn thành' },
+    { id: '#RSW098', date: '28/03/2026 09:15', type: 'Mua RSW', amountUSD: 500, amountVND: '13.500.000', status: 'Bị huỷ' },
+    { id: '#SWC075', date: '25/03/2026 20:00', type: 'Mua SWC', amountUSD: 2000, amountVND: '54.000.000', status: 'Hoàn thành' }
 ];
 
 function App() {
@@ -23,9 +23,9 @@ function App() {
     const [platform, setPlatform] = useState('SWC');
     const [gmail, setGmail] = useState('');
     
-    // State lưu giá 7 Coin Sếp yêu cầu
+    // State lưu giá 8 Coin
     const [prices, setPrices] = useState<CryptoPrices>({
-        BTC: '...', ETH: '...', BNB: '...', XRP: '...', DOGE: '...', LINK: '...', CAKE: '...'
+        BTC: '...', ETH: '...', BNB: '...', XRP: '...', DOGE: '...', LINK: '...', CAKE: '...', ADA: '...'
     });
     
     // Lưu thông tin User Telegram
@@ -40,9 +40,8 @@ function App() {
     const rateRSW = parseFloat(urlParams.get('rsw') || '27.0');
     const rates: Record<string, number> = { SWC: rateSWC, RSW: rateRSW };
 
-    // Danh sách symbol và coin hiển thị
-    const displayCoins = ["BTC", "ETH", "BNB", "XRP", "DOGE", "LINK", "CAKE"];
-    const binanceSymbols = displayCoins.map(coin => coin + "USDT");
+    // 8 Đồng coin hiển thị dạng khối Block
+    const binanceSymbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "XRPUSDT", "DOGEUSDT", "LINKUSDT", "CAKEUSDT", "ADAUSDT"];
 
     useEffect(() => {
         WebApp.ready();
@@ -53,14 +52,13 @@ function App() {
         if (user) {
             setTgUser({
                 name: user.first_name || 'Khách Hàng',
-                avatar: user.photo_url || 'https://photos.app.goo.gl/CZUUKXM1gCSdxQCVA',
+                avatar: user.photo_url || 'https://i.pravatar.cc/150?img=11',
                 rank: 'Thành Viên' 
             });
         }
 
         const fetchPrices = async () => {
             try {
-                // Đã Fix lỗi mất giá: Dùng encodeURIComponent để mã hóa ngoặc vuông cho mượt trên iOS
                 const url = `https://api.binance.com/api/v3/ticker/price?symbols=${encodeURIComponent(JSON.stringify(binanceSymbols))}`;
                 const response = await fetch(url);
                 const data = await response.json();
@@ -68,7 +66,6 @@ function App() {
                 const priceMap: any = {};
                 data.forEach((item: any) => { priceMap[item.symbol] = item.price; });
 
-                // Hàm format giá an toàn, chống NaN
                 const formatP = (priceStr: string | undefined, decimals: number) => {
                     if (!priceStr) return '...';
                     return parseFloat(priceStr).toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
@@ -81,7 +78,8 @@ function App() {
                     XRP: formatP(priceMap['XRPUSDT'], 4),
                     DOGE: formatP(priceMap['DOGEUSDT'], 4),
                     LINK: formatP(priceMap['LINKUSDT'], 2),
-                    CAKE: formatP(priceMap['CAKEUSDT'], 3), // Để 3 số thập phân cho chuẩn
+                    CAKE: formatP(priceMap['CAKEUSDT'], 3),
+                    ADA: formatP(priceMap['ADAUSDT'], 4)
                 });
             } catch (e) { console.error("Lỗi lấy giá Binance:", e); }
         };
@@ -106,27 +104,17 @@ function App() {
         WebApp.sendData(JSON.stringify(payload));
     };
 
-    // Chuỗi nội dung chạy Marquee 7 Coin
-    const marqueeContent = displayCoins.map(sym => `🔥 ${sym}: $${(prices as any)[sym] || '...'}`).join('   |   ');
-
     return (
         <div className="h-screen w-full bg-gray-50 font-sans text-black flex flex-col overflow-hidden relative">
             
-            {/* CSS TỔNG HỢP */}
+            {/* CSS TỔNG HỢP (ANIMATION AVATAR & CẢNH BÁO) */}
             <style>{`
-                /* Ticker */
-                @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-                .marquee-wrapper { display: block; width: 100%; overflow: hidden; white-space: nowrap; box-sizing: border-box; }
-                .marquee-content { display: inline-block; padding-left: 100%; animation: scroll 25s linear infinite; }
-                
-                /* Pulse Border Cảnh báo */
                 @keyframes pulse-border-powerful {
                     0%, 100% { border-color: #fca5a5; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2); }
                     50% { border-color: #ef4444; box-shadow: 0 0 15px 5px rgba(239, 68, 68, 0.6); }
                 }
                 .alert-box-powerful { animation: pulse-border-powerful 1.2s infinite; }
 
-                /* Avatar Glowing Dashed Border */
                 @keyframes spin-slow { 100% { transform: rotate(360deg); } }
                 .avatar-glow-container { position: relative; display: inline-block; border-radius: 50%; }
                 .avatar-glow-container::before {
@@ -140,13 +128,15 @@ function App() {
 
             {/* HEADER DARK MODE XỊN XÒ */}
             <div className="w-full bg-gray-950 text-white p-4 flex justify-between items-center rounded-b-3xl shadow-xl z-20 shrink-0 border-b border-gray-800">
-                {/* Góc trái: Chèn Logo Sếp vừa gửi vào đây */}
                 <div className="flex items-center gap-3">
+                    
+                    {/* 👇 SẾP DÁN LINK ẢNH LOGO VÀO CHỖ src="..." BÊN DƯỚI NHÉ 👇 */}
                     <img 
-                        src="https://i.ibb.co/L9gZkYn/logo-swc.png" /* Thay link ảnh Logo SWC PASS của Sếp vào chỗ này nếu muốn đổi */
-                        alt="SWC Logo" 
+                        src="https://photos.app.goo.gl/i8BVUufxfV1XB41t5" 
+                        alt="Logo SWC" 
                         className="w-10 h-10 rounded-full border border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] object-cover bg-white" 
                     />
+                    
                     <div className="flex flex-col">
                         <span className="font-black text-blue-400 text-sm tracking-wide">TRỢ LÝ USDT</span>
                         <span className="text-[10px] text-gray-400">Nạp rút hỏa tốc</span>
@@ -165,41 +155,34 @@ function App() {
                 </div>
             </div>
 
-            {/* KHU VỰC NỘI DUNG CHÍNH (CÓ THỂ CUỘN) */}
+            {/* KHU VỰC NỘI DUNG CHÍNH */}
             <div className="flex-grow overflow-y-auto pb-24 p-4 block">
                 
                 {/* HIỂN THỊ TAB: GIAO DỊCH */}
                 {activeTab === 'trade' && (
                     <div className="w-full max-w-md mx-auto flex flex-col gap-4 block">
                         
-                        {/* 1. THANH TICKER CHẠY COIN */}
-                        <div className="w-full bg-gray-900 py-3 rounded-xl border border-gray-800 shadow-md">
-                            <div className="marquee-wrapper">
-                                <div className="marquee-content text-green-400 font-mono text-xs font-bold tracking-wide">
-                                    {marqueeContent} &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; {marqueeContent}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 2. BỐN KHỐI BÁO GIÁ CRYPTO TO (BTC, ETH, DOGE, XRP) */}
-                        <div className="w-full grid grid-cols-2 gap-3">
+                        {/* 1. KHỐI 8 COIN (Xếp 4 cột - 2 hàng cho gọn, không bị chiếm hết màn hình) */}
+                        <div className="w-full grid grid-cols-4 gap-2 mb-2">
                             {[
-                                { sym: 'BTC', p: prices.BTC, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/btc.png' },
-                                { sym: 'ETH', p: prices.ETH, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/eth.png' },
-                                { sym: 'DOGE', p: prices.DOGE, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/doge.png' },
-                                { sym: 'XRP', p: prices.XRP, img: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/xrp.png' }
+                                { sym: 'BTC', p: prices.BTC, img: 'https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=032' },
+                                { sym: 'ETH', p: prices.ETH, img: 'https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=032' },
+                                { sym: 'BNB', p: prices.BNB, img: 'https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=032' },
+                                { sym: 'XRP', p: prices.XRP, img: 'https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=032' },
+                                { sym: 'DOGE', p: prices.DOGE, img: 'https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=032' },
+                                { sym: 'LINK', p: prices.LINK, img: 'https://cryptologos.cc/logos/chainlink-link-logo.svg?v=032' },
+                                { sym: 'CAKE', p: prices.CAKE, img: 'https://cryptologos.cc/logos/pancakeswap-cake-logo.svg?v=032' },
+                                { sym: 'ADA', p: prices.ADA, img: 'https://cryptologos.cc/logos/cardano-ada-logo.svg?v=032' }
                             ].map(coin => (
-                                <div key={coin.sym} className="bg-white border border-gray-100 p-3 rounded-2xl flex items-center justify-between shadow-sm">
-                                    <div className="flex items-center gap-2">
-                                        <img src={coin.img} className="w-6 h-6" alt={coin.sym} />
-                                        <span className="text-xs font-bold text-gray-500">{coin.sym}</span>
-                                    </div>
-                                    <span className="text-sm font-black text-green-500">${coin.p}</span>
+                                <div key={coin.sym} className="bg-white border border-gray-100 p-2 rounded-xl flex flex-col justify-center items-center shadow-sm">
+                                    <img src={coin.img} className="w-6 h-6 mb-1" alt={coin.sym} />
+                                    <span className="text-[10px] font-bold text-gray-500">{coin.sym}</span>
+                                    <span className="text-xs font-black text-green-500">${coin.p}</span>
                                 </div>
                             ))}
                         </div>
 
-                        {/* 3. FORM GIAO DỊCH TỔNG HỢP */}
+                        {/* 2. FORM GIAO DỊCH TỔNG HỢP */}
                         <div className="w-full bg-white p-5 sm:p-6 rounded-3xl shadow-lg border border-gray-100 mt-2 block">
                             
                             <label className="block text-sm font-bold mb-3 text-gray-700">1. Chọn dự án:</label>
@@ -254,10 +237,17 @@ function App() {
                                         </span>
                                         <span className="text-xs text-gray-400">{tx.id}</span>
                                     </div>
-                                    <p className="text-xs text-gray-500 font-medium">{tx.date}</p>
+                                    <p className="text-xs text-gray-500 font-medium mb-1">{tx.date}</p>
+                                    
+                                    {/* TRẠNG THÁI HOÀN THÀNH / BỊ HUỶ */}
+                                    <p className={`text-xs font-bold ${tx.status === 'Hoàn thành' ? 'text-green-600' : 'text-red-500'}`}>
+                                        {tx.status === 'Hoàn thành' ? '✓ Hoàn thành' : '✕ Bị huỷ'}
+                                    </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-black text-green-600 text-lg">+{tx.amountUSD} $</p>
+                                    <p className={`font-black text-lg ${tx.status === 'Hoàn thành' ? 'text-green-600' : 'text-gray-400 line-through'}`}>
+                                        {tx.status === 'Hoàn thành' ? '+' : ''}{tx.amountUSD} $
+                                    </p>
                                     <p className="text-xs font-bold text-gray-400">{tx.amountVND} VNĐ</p>
                                 </div>
                             </div>
