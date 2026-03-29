@@ -127,13 +127,13 @@ function App() {
   }, []);
 
   // ==========================================================
-  // 5. TÍNH TIỀN VÀ XỬ LÝ NÚT THANH TOÁN (FIX LỖI NÚT XANH)
+  // 5. TÍNH TIỀN VÀ XỬ LÝ NÚT THANH TOÁN (FIX CHAT_ID MẠNH MẼ NHẤT)
   // ==========================================================
   const currentRate = platform === 'SWC' ? internalRates.swc : internalRates.rsw;
   const totalVNDNum = Number(amount) * currentRate * 1000;
   const totalVNDStr = isNaN(totalVNDNum) ? '0' : totalVNDNum.toLocaleString('vi-VN');
 
-const handleSendData = async () => {
+  const handleSendData = async () => {
     // 🛡️ 1. Kiểm tra xác minh
     if (!tgUser.isVerified) {
       WebApp.showPopup({
@@ -149,13 +149,20 @@ const handleSendData = async () => {
       WebApp.showAlert("⚠️ Sếp hãy nhập số lượng USD muốn nạp!");
       return;
     }
+    if (!gmail.trim() || !gmail.includes('@')) {
+      WebApp.showAlert("⚠️ Sếp vui lòng nhập Gmail hợp lệ!");
+      return;
+    }
 
-    // 🚀 3. Lấy chat_id từ URL
+    // 🚀 3. LẤY CHAT_ID THÔNG MINH TỪ LÕI TELEGRAM (Bỏ qua link URL)
+    const user = WebApp.initDataUnsafe?.user;
     const urlParams = new URLSearchParams(window.location.search);
-    const chat_id = urlParams.get('chat_id');
+    
+    // Móc thẳng ID từ hệ thống Telegram. Rất khó xịt!
+    const chat_id = user?.id?.toString() || urlParams.get('chat_id');
 
     if (!chat_id) {
-      WebApp.showAlert("❌ Lỗi: Không tìm thấy Chat ID. Sếp vui lòng gõ /start lại trên Bot nhé!");
+      WebApp.showAlert("❌ Lỗi: Không nhận diện được tài khoản. Sếp vui lòng đóng App, gõ /start lại nhé!");
       return;
     }
 
@@ -167,11 +174,11 @@ const handleSendData = async () => {
       gmail: gmail.trim()
     };
 
+    // 🚀 4. GỬI QUA ĐƯỜNG ỐNG API
     try {
       WebApp.MainButton.setText("ĐANG TẠO HÓA ĐƠN...");
       WebApp.MainButton.showProgress();
 
-      // 🔥 URL CHUẨN LẤY TỪ LOGS CỦA SẾP ĐÂY Ạ:
       const response = await fetch('https://bot-ty-gia-swc.onrender.com/api/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -179,13 +186,14 @@ const handleSendData = async () => {
       });
 
       if (response.ok) {
-        WebApp.close(); // Thành công thì đóng app để xem QR
+        // Đóng App luôn để khách thấy QR nảy ra trong chat
+        WebApp.close();
       } else {
         const errData = await response.json();
         WebApp.showAlert(`❌ Lỗi máy chủ Bot: ${errData.message || 'Thử lại sau'}`);
       }
     } catch (e) {
-      WebApp.showAlert("❌ Không kết nối được với Bot. Sếp kiểm tra mạng hoặc Build lại Bot nhé!");
+      WebApp.showAlert("❌ Không kết nối được với Bot. Sếp kiểm tra mạng nhé!");
     } finally {
       WebApp.MainButton.hideProgress();
     }
