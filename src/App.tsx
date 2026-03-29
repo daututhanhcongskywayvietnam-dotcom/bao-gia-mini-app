@@ -39,14 +39,26 @@ function App() {
   const [gmail, setGmail] = useState('');
   const [internalRates, setInternalRates] = useState({ swc: 27.0, rsw: 27.0 });
   const [prices, setPrices] = useState<CryptoPrices>({});
+  
+  // Nâng cấp tgUser có thêm isVerified và totalPurchased để tính hạng
   const [tgUser, setTgUser] = useState({
     name: 'Khách Hàng',
     avatar: 'https://i.pravatar.cc/150?img=11',
-    rank: 'Thành Viên'
+    isVerified: false, // MẶC ĐỊNH LÀ CHƯA XÁC MINH (Chỉnh thành true để test)
+    totalPurchased: 5500 // Giả lập tổng tiền đã mua (USD) để chia hạng
   });
 
-  const displayCoins = ["BTC", "ETH", "BNB", "XRP", "DOGE", "LINK", "CAKE", "ADA"];
+  // Đã bỏ LINK và ADA
+  const displayCoins = ["BTC", "ETH", "BNB", "XRP", "DOGE", "CAKE"];
   const binanceSymbols = displayCoins.map(coin => coin + "USDT");
+
+  // Hàm tính rank dựa trên tổng chi tiêu
+  const getRank = (total: number) => {
+    if (total >= 10000) return 'Hạng Kim Cương 💎';
+    if (total >= 5000) return 'Hạng Vàng 🥇';
+    if (total >= 1000) return 'Hạng Bạc 🥈';
+    return 'Thành Viên 🥉';
+  };
 
   // ==========================================================
   // 4. HIỆU ỨNG VÀ LOGIC FETCH DỮ LIỆU
@@ -62,14 +74,13 @@ function App() {
 
     const user = WebApp.initDataUnsafe?.user;
     if (user) {
-      setTgUser({
+      setTgUser(prev => ({
+        ...prev,
         name: (user.last_name ? user.last_name + ' ' : '') + user.first_name,
         avatar: user.photo_url || 'https://i.pravatar.cc/150?img=11',
-        rank: 'Thành Viên'
-      });
+      }));
     }
 
-    // ĐÃ GẮN LINK BOT CHUẨN CỦA SẾP VÀO ĐÂY
     const fetchLiveInternalRates = async () => {
       try {
         const response = await fetch('https://bot-ty-gia-swc.onrender.com/api/rates');
@@ -82,7 +93,6 @@ function App() {
       }
     };
 
-    // LẤY GIÁ TỪ BINANCE
     const fetchCryptoPrices = async () => {
       try {
         const url = `https://api.binance.com/api/v3/ticker/price?symbols=${encodeURIComponent(JSON.stringify(binanceSymbols))}`;
@@ -93,7 +103,7 @@ function App() {
           data.forEach((item: any) => {
             const symbol = item.symbol.replace('USDT', '');
             const price = parseFloat(item.price);
-            const dec = (symbol === 'DOGE' || symbol === 'XRP' || symbol === 'ADA') ? 4 : 2;
+            const dec = (symbol === 'DOGE' || symbol === 'XRP') ? 4 : 2;
             priceMap[symbol] = price.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
           });
           setPrices(priceMap);
@@ -103,11 +113,9 @@ function App() {
       }
     };
 
-    // Chạy fetch ngay khi mở App
     fetchLiveInternalRates();
     fetchCryptoPrices();
     
-    // Tự động hỏi giá liên tục mỗi 5 giây (Bỏ qua rào cản cache của Telegram)
     const interval = setInterval(() => {
       fetchLiveInternalRates();
       fetchCryptoPrices();
@@ -117,13 +125,19 @@ function App() {
   }, []);
 
   // ==========================================================
-  // 5. TÍNH TIỀN
+  // 5. TÍNH TIỀN VÀ XỬ LÝ NÚT THANH TOÁN
   // ==========================================================
   const currentRate = platform === 'SWC' ? internalRates.swc : internalRates.rsw;
   const totalVNDNum = Number(amount) * currentRate * 1000;
   const totalVNDStr = isNaN(totalVNDNum) ? '0' : totalVNDNum.toLocaleString('vi-VN');
 
   const handleSendData = () => {
+    // Check xác minh trước
+    if (!tgUser.isVerified) {
+      WebApp.showAlert("⚠️ Sếp chưa xác minh tài khoản! Vui lòng hoàn tất xác minh trước khi tạo QR giao dịch.");
+      return;
+    }
+
     if (!amount || Number(amount) <= 0) {
       WebApp.showAlert("⚠️ Sếp hãy nhập số lượng USD muốn nạp!");
       return;
@@ -144,15 +158,14 @@ function App() {
     WebApp.sendData(JSON.stringify(payload));
   };
 
+  // Đã xóa bỏ LINK và ADA khỏi danh sách khối coin
   const coinBlocks = [
     { sym: 'BTC', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1.png' },
     { sym: 'ETH', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png' },
     { sym: 'BNB', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png' },
     { sym: 'XRP', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/52.png' },
     { sym: 'DOGE', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/74.png' },
-    { sym: 'LINK', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1975.png' },
-    { sym: 'CAKE', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/7186.png' },
-    { sym: 'ADA', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png' }
+    { sym: 'CAKE', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/7186.png' }
   ];
 
   return (
@@ -198,7 +211,14 @@ function App() {
         <div className="flex items-center gap-3 text-right">
           <div className="flex flex-col">
             <span className="font-bold text-sm text-slate-100">{tgUser.name}</span>
-            <span className="text-[9px] text-blue-400 font-black uppercase tracking-tighter bg-blue-900/40 px-1.5 py-0.5 rounded-md">{tgUser.rank}</span>
+            <span className="text-[9px] text-blue-400 font-black uppercase tracking-tighter bg-blue-900/40 px-1.5 py-0.5 rounded-md mt-1">
+              {getRank(tgUser.totalPurchased)}
+            </span>
+            {tgUser.isVerified ? (
+              <span className="text-[10px] text-emerald-400 font-bold mt-1">Đã xác minh ✅</span>
+            ) : (
+              <span className="text-[10px] text-rose-400 font-bold mt-1">Chưa xác minh ❌</span>
+            )}
           </div>
           <div className="avatar-container w-10 h-10">
             <img src={tgUser.avatar} alt="User" className="w-full h-full rounded-full object-cover relative z-10 border border-slate-700 bg-slate-800 shadow-inner" />
@@ -211,7 +231,8 @@ function App() {
         {activeTab === 'trade' ? (
           <div className="w-full max-w-md mx-auto flex flex-col gap-5 animate-slide-up">
             
-            <section className="w-full grid grid-cols-4 gap-2">
+            {/* Cập nhật grid-cols-3 vì giờ chỉ còn 6 coin cho cân đối */}
+            <section className="w-full grid grid-cols-3 gap-2">
               {coinBlocks.map(coin => (
                 <div key={coin.sym} className="bg-white border border-slate-200 py-3 px-1 rounded-2xl flex flex-col items-center shadow-sm">
                   <img src={coin.img} className="w-7 h-7 mb-1.5" alt={coin.sym} />
@@ -239,7 +260,8 @@ function App() {
               <div className="flex flex-col gap-4">
                 <div>
                   <label className="block text-xs font-bold mb-2 text-slate-600 ml-1">Số lượng USD muốn mua:</label>
-                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full p-4 rounded-2xl border-2 border-slate-100 font-black text-center text-3xl text-blue-600 bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0.00" />
+                  {/* Phóng to số tiền text-3xl -> text-4xl */}
+                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full p-4 rounded-2xl border-2 border-slate-100 font-black text-center text-4xl text-blue-600 bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0.00" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold mb-2 text-slate-600 ml-1">Gmail nhận biên lai:</label>
@@ -249,8 +271,9 @@ function App() {
 
               <div>
                 <label className="block text-xs font-black mb-2 text-slate-500 uppercase tracking-widest text-center">Tổng tiền thanh toán</label>
-                <div className="w-full p-5 rounded-2xl bg-emerald-50 border-2 border-emerald-200 text-emerald-700 text-4xl font-black text-center shadow-inner">
-                  {totalVNDStr} <span className="text-base font-bold">VNĐ</span>
+                {/* Phóng to tổng tiền text-4xl -> text-5xl */}
+                <div className="w-full p-5 rounded-2xl bg-emerald-50 border-2 border-emerald-200 text-emerald-700 text-5xl font-black text-center shadow-inner break-words">
+                  {totalVNDStr} <span className="text-lg font-bold">VNĐ</span>
                 </div>
               </div>
 
