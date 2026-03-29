@@ -69,7 +69,7 @@ function App() {
     const rRSW = parseFloat(urlParams.get('rsw') || '27.0');
     setInternalRates({ swc: rSWC, rsw: rRSW });
 
-    // Đọc trạng thái xác minh từ URL (?verified=true)
+    // 🚀 LẤY DỮ LIỆU XÁC MINH TỪ BOT TRUYỀN SANG
     const isVerifiedFromUrl = urlParams.get('verified') === 'true';
     const totalPurchasedFromUrl = parseFloat(urlParams.get('total') || '0');
 
@@ -82,6 +82,7 @@ function App() {
       totalPurchased: totalPurchasedFromUrl
     });
 
+    // HÀM LẤY TỶ GIÁ (CHỈ DÙNG ĐỂ HIỂN THỊ)
     const fetchLiveInternalRates = async () => {
       try {
         const response = await fetch('https://bot-ty-gia-swc.onrender.com/api/rates');
@@ -126,14 +127,14 @@ function App() {
   }, []);
 
   // ==========================================================
-  // 5. TÍNH TIỀN VÀ XỬ LÝ NÚT THANH TOÁN
+  // 5. TÍNH TIỀN VÀ XỬ LÝ NÚT THANH TOÁN (FIX LỖI NÚT XANH)
   // ==========================================================
   const currentRate = platform === 'SWC' ? internalRates.swc : internalRates.rsw;
   const totalVNDNum = Number(amount) * currentRate * 1000;
   const totalVNDStr = isNaN(totalVNDNum) ? '0' : totalVNDNum.toLocaleString('vi-VN');
 
-const handleSendData = async () => {
-    // 🛡️ 1. Kiểm tra xác minh
+  const handleSendData = async () => {
+    // 🛡️ 1. Kiểm tra xác minh (Dựa trên data thật Bot gửi qua URL)
     if (!tgUser.isVerified) {
       WebApp.showPopup({
         title: '⚠️ Chưa xác minh',
@@ -153,7 +154,7 @@ const handleSendData = async () => {
       return;
     }
 
-    // 🚀 3. Lấy chat_id từ URL để biết gửi QR cho ai
+    // 🚀 3. Lấy chat_id từ URL
     const urlParams = new URLSearchParams(window.location.search);
     const chat_id = urlParams.get('chat_id');
 
@@ -165,23 +166,22 @@ const handleSendData = async () => {
       gmail: gmail.trim()
     };
 
-    // 🚀 4. GỬI ĐƠN QUA API (Nút xanh hay nút dưới đều chạy 100%)
+    // 🚀 4. GỬI QUA ĐƯỜNG ỐNG API (Khắc phục lỗi Nút Xanh bị chặn)
     try {
-      // Hiện loading trên nút chính của Telegram (nếu có dùng)
       WebApp.MainButton.setText("ĐANG TẠO HÓA ĐƠN...");
       WebApp.MainButton.showProgress();
 
-      const response = await fetch('https://bao-gia-mini-app.onrender.com/api/order', {
+      const response = await fetch('https://bot-ty-gia-swc.onrender.com/api/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
       if (response.ok) {
-        // Nếu thành công thì đóng App luôn, QR sẽ tự nảy ra trong chat
+        // Đóng App luôn để khách thấy QR nảy ra trong chat
         WebApp.close();
       } else {
-        WebApp.showAlert("❌ Lỗi server Bot, Sếp thử lại nhé!");
+        WebApp.showAlert("❌ Lỗi máy chủ Bot, Sếp thử lại nhé!");
       }
     } catch (e) {
       WebApp.showAlert("❌ Không kết nối được với Bot. Sếp kiểm tra mạng nhé!");
