@@ -133,8 +133,8 @@ function App() {
   const totalVNDNum = Number(amount) * currentRate * 1000;
   const totalVNDStr = isNaN(totalVNDNum) ? '0' : totalVNDNum.toLocaleString('vi-VN');
 
-  const handleSendData = async () => {
-    // 🛡️ 1. Kiểm tra xác minh (Dựa trên data thật Bot gửi qua URL)
+const handleSendData = async () => {
+    // 🛡️ 1. Kiểm tra xác minh
     if (!tgUser.isVerified) {
       WebApp.showPopup({
         title: '⚠️ Chưa xác minh',
@@ -149,14 +149,15 @@ function App() {
       WebApp.showAlert("⚠️ Sếp hãy nhập số lượng USD muốn nạp!");
       return;
     }
-    if (!gmail.trim() || !gmail.includes('@')) {
-      WebApp.showAlert("⚠️ Sếp vui lòng nhập Gmail hợp lệ!");
-      return;
-    }
 
     // 🚀 3. Lấy chat_id từ URL
     const urlParams = new URLSearchParams(window.location.search);
     const chat_id = urlParams.get('chat_id');
+
+    if (!chat_id) {
+      WebApp.showAlert("❌ Lỗi: Không tìm thấy Chat ID. Sếp vui lòng gõ /start lại trên Bot nhé!");
+      return;
+    }
 
     const payload = {
       chat_id: chat_id,
@@ -166,11 +167,11 @@ function App() {
       gmail: gmail.trim()
     };
 
-    // 🚀 4. GỬI QUA ĐƯỜNG ỐNG API (Khắc phục lỗi Nút Xanh bị chặn)
     try {
       WebApp.MainButton.setText("ĐANG TẠO HÓA ĐƠN...");
       WebApp.MainButton.showProgress();
 
+      // 🔥 URL CHUẨN LẤY TỪ LOGS CỦA SẾP ĐÂY Ạ:
       const response = await fetch('https://bot-ty-gia-swc.onrender.com/api/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -178,13 +179,13 @@ function App() {
       });
 
       if (response.ok) {
-        // Đóng App luôn để khách thấy QR nảy ra trong chat
-        WebApp.close();
+        WebApp.close(); // Thành công thì đóng app để xem QR
       } else {
-        WebApp.showAlert("❌ Lỗi máy chủ Bot, Sếp thử lại nhé!");
+        const errData = await response.json();
+        WebApp.showAlert(`❌ Lỗi máy chủ Bot: ${errData.message || 'Thử lại sau'}`);
       }
     } catch (e) {
-      WebApp.showAlert("❌ Không kết nối được với Bot. Sếp kiểm tra mạng nhé!");
+      WebApp.showAlert("❌ Không kết nối được với Bot. Sếp kiểm tra mạng hoặc Build lại Bot nhé!");
     } finally {
       WebApp.MainButton.hideProgress();
     }
