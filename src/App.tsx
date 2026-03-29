@@ -40,7 +40,6 @@ function App() {
   const [internalRates, setInternalRates] = useState({ swc: 27.0, rsw: 27.0 });
   const [prices, setPrices] = useState<CryptoPrices>({});
   
-  // State User với giá trị mặc định, sẽ được cập nhật ngay khi app load
   const [tgUser, setTgUser] = useState({
     name: 'Khách Hàng',
     avatar: 'https://i.pravatar.cc/150?img=11',
@@ -51,7 +50,6 @@ function App() {
   const displayCoins = ["BTC", "ETH", "BNB", "XRP", "DOGE", "CAKE"];
   const binanceSymbols = displayCoins.map(coin => coin + "USDT");
 
-  // Hàm tính rank dựa trên tổng chi tiêu
   const getRank = (total: number) => {
     if (total >= 10000) return 'Hạng Kim Cương 💎';
     if (total >= 5000) return 'Hạng Vàng 🥇';
@@ -66,7 +64,6 @@ function App() {
     WebApp.ready();
     WebApp.expand();
 
-    // 🚀 BẮT DỮ LIỆU TỪ LINK URL CỦA BOT GỬI VÀO (Quan trọng để hiển thị Đã xác minh)
     const urlParams = new URLSearchParams(window.location.search);
     const rSWC = parseFloat(urlParams.get('swc') || '27.0');
     const rRSW = parseFloat(urlParams.get('rsw') || '27.0');
@@ -74,18 +71,15 @@ function App() {
 
     // Đọc trạng thái xác minh từ URL (?verified=true)
     const isVerifiedFromUrl = urlParams.get('verified') === 'true';
-    
-    // Đọc tổng tiền đã mua từ URL (?total=5000)
     const totalPurchasedFromUrl = parseFloat(urlParams.get('total') || '0');
 
     const user = WebApp.initDataUnsafe?.user;
     
-    // Cập nhật thông tin User đồng bộ với dữ liệu Bot truyền sang
     setTgUser({
       name: user ? ((user.last_name ? user.last_name + ' ' : '') + user.first_name) : 'Khách Hàng',
       avatar: user?.photo_url || 'https://i.pravatar.cc/150?img=11',
-      isVerified: isVerifiedFromUrl, // Lấy giá trị thật từ Bot
-      totalPurchased: totalPurchasedFromUrl // Lấy giá trị thật từ Bot
+      isVerified: isVerifiedFromUrl,
+      totalPurchased: totalPurchasedFromUrl
     });
 
     const fetchLiveInternalRates = async () => {
@@ -139,12 +133,12 @@ function App() {
   const totalVNDStr = isNaN(totalVNDNum) ? '0' : totalVNDNum.toLocaleString('vi-VN');
 
   const handleSendData = () => {
-    // 🛡️ CHẶN LỆNH KHI CHƯA XÁC MINH
+    // 🛡️ ĐÃ FIX LỖI BUILD TẠI ĐÂY (Line 147)
     if (!tgUser.isVerified) {
       WebApp.showPopup({
         title: '⚠️ Chưa xác minh',
         message: 'Tài khoản của Sếp chưa hoàn tất KYC. Vui lòng nhắn tin Họ Tên + SĐT cho Bot và đợi Admin duyệt để đặt lệnh!',
-        buttons: [{ type: 'ok', text: 'Đã hiểu' }]
+        buttons: [{ type: 'ok' }] // Chỉ để type: 'ok', không thêm text nhãn vào đây
       });
       return;
     }
