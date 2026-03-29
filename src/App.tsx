@@ -19,7 +19,7 @@ interface Transaction {
 }
 
 // ==========================================================
-// 2. DỮ LIỆU MẪU LỊCH SỬ (ĐÃ FIX LỖI MOCK_HISTORY)
+// 2. DỮ LIỆU MẪU LỊCH SỬ
 // ==========================================================
 const MOCK_HISTORY: Transaction[] = [
   { id: '#SWC999', userId: 'ID: 507318xxx', date: '29/03 07:15', type: 'Mua SWC', amountUSD: 5000, amountVND: '135.000.000', status: 'Hoàn thành' },
@@ -42,10 +42,9 @@ function App() {
   const [tgUser, setTgUser] = useState({
     name: 'Khách Hàng',
     avatar: 'https://i.pravatar.cc/150?img=11',
-    rank: 'Thành Viên V.I.P'
+    rank: 'Thành Viên'
   });
 
-  // Cấu hình Symbol 8 Coin để hiện khối Block
   const displayCoins = ["BTC", "ETH", "BNB", "XRP", "DOGE", "LINK", "CAKE", "ADA"];
   const binanceSymbols = displayCoins.map(coin => coin + "USDT");
 
@@ -56,13 +55,11 @@ function App() {
     WebApp.ready();
     WebApp.expand();
 
-    // Lấy thông tin giá từ URL (Dự phòng khi API chậm)
     const urlParams = new URLSearchParams(window.location.search);
     const rSWC = parseFloat(urlParams.get('swc') || '27.0');
     const rRSW = parseFloat(urlParams.get('rsw') || '27.0');
     setInternalRates({ swc: rSWC, rsw: rRSW });
 
-    // Lấy thông tin User từ Telegram
     const user = WebApp.initDataUnsafe?.user;
     if (user) {
       setTgUser({
@@ -72,7 +69,7 @@ function App() {
       });
     }
 
-    // Hàm lấy giá nội bộ tự động từ Server Bot Python của Sếp
+    // LẤY GIÁ TỪ BOT PYTHON CỦA SẾP
     const fetchLiveInternalRates = async () => {
       try {
         const response = await fetch('https://bao-gia-mini-app.onrender.com/api/rates');
@@ -81,18 +78,17 @@ function App() {
           setInternalRates({ swc: data.swc, rsw: data.rsw });
         }
       } catch (e) {
-        console.warn("API Bot đang bận, dùng giá từ URL...");
+        console.warn("Đang dùng giá dự phòng...");
       }
     };
 
-    // Hàm lấy giá Crypto từ Binance API
+    // LẤY GIÁ TỪ BINANCE (ĐÃ SỬA LỖI CHÍNH TẢ priceMap)
     const fetchCryptoPrices = async () => {
       try {
         const url = `https://api.binance.com/api/v3/ticker/price?symbols=${encodeURIComponent(JSON.stringify(binanceSymbols))}`;
         const response = await fetch(url);
         const data = await response.json();
-        const priceMap: CryptoPrices = {}; // ĐÃ FIX LỖI CHÍNH TẢ Ở ĐÂY
-        
+        const priceMap: CryptoPrices = {}; 
         if (Array.isArray(data)) {
           data.forEach((item: any) => {
             const symbol = item.symbol.replace('USDT', '');
@@ -107,7 +103,6 @@ function App() {
       }
     };
 
-    // Chạy ngay lần đầu và lặp lại sau mỗi 10 giây
     fetchLiveInternalRates();
     fetchCryptoPrices();
     const interval = setInterval(() => {
@@ -119,7 +114,7 @@ function App() {
   }, []);
 
   // ==========================================================
-  // 5. LOGIC TÍNH TIỀN VÀ GỬI DỮ LIỆU
+  // 5. TÍNH TIỀN
   // ==========================================================
   const currentRate = platform === 'SWC' ? internalRates.swc : internalRates.rsw;
   const totalVNDNum = Number(amount) * currentRate * 1000;
@@ -146,7 +141,6 @@ function App() {
     WebApp.sendData(JSON.stringify(payload));
   };
 
-  // Cấu hình Icon Coin
   const coinBlocks = [
     { sym: 'BTC', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1.png' },
     { sym: 'ETH', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png' },
@@ -161,9 +155,6 @@ function App() {
   return (
     <div className="h-screen w-full bg-slate-50 font-sans text-slate-900 flex flex-col overflow-hidden relative">
 
-      {/* ==========================================================
-          6. CSS ANIMATIONS (KEYFRAMES)
-      ========================================================== */}
       <style>{`
         @keyframes pulse-border {
           0%, 100% { border-color: #fca5a5; box-shadow: 0 0 0 0 rgba(239,68,68,0.2); }
@@ -187,9 +178,7 @@ function App() {
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
-      {/* ==========================================================
-          7. HEADER SECTION
-      ========================================================== */}
+      {/* HEADER */}
       <header className="w-full bg-gradient-to-r from-slate-950 via-blue-950 to-slate-950 text-white p-4 flex justify-between items-center rounded-b-[2.5rem] shadow-2xl z-30 shrink-0 border-b border-blue-800">
         <div className="flex items-center gap-3">
           <img
@@ -214,16 +203,14 @@ function App() {
         </div>
       </header>
 
-      {/* ==========================================================
-          8. MAIN CONTENT (TABS)
-      ========================================================== */}
+      {/* MAIN CONTENT */}
       <main className="flex-grow overflow-y-auto pb-28 p-4 block">
         {activeTab === 'trade' ? (
           <div className="w-full max-w-md mx-auto flex flex-col gap-5 animate-slide-up">
             
             <section className="w-full grid grid-cols-4 gap-2">
               {coinBlocks.map(coin => (
-                <div key={coin.sym} className="bg-white border border-slate-200 py-3 px-1 rounded-2xl flex flex-col items-center shadow-sm hover:shadow-md transition-shadow">
+                <div key={coin.sym} className="bg-white border border-slate-200 py-3 px-1 rounded-2xl flex flex-col items-center shadow-sm">
                   <img src={coin.img} className="w-7 h-7 mb-1.5" alt={coin.sym} />
                   <span className="text-[10px] font-bold text-slate-500">{coin.sym}</span>
                   <span className="text-[10px] font-black text-emerald-600">${prices[coin.sym] || '...'}</span>
@@ -311,9 +298,7 @@ function App() {
         )}
       </main>
 
-      {/* ==========================================================
-          9. BOTTOM NAV BAR
-      ========================================================== */}
+      {/* BOTTOM NAV BAR */}
       <nav className="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-slate-200 p-3 flex justify-around shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-40 pb-safe-area-inset-bottom">
         <button onClick={() => setActiveTab('trade')} className={`flex flex-col items-center gap-1 transition-all duration-300 ${activeTab === 'trade' ? 'text-blue-600 scale-110' : 'text-slate-400'}`}>
           <div className={`p-2 rounded-xl ${activeTab === 'trade' ? 'bg-blue-50' : ''}`}>
