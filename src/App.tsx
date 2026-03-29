@@ -69,10 +69,10 @@ function App() {
       });
     }
 
-    // LẤY GIÁ TỪ BOT PYTHON CỦA SẾP
+    // ĐÃ GẮN LINK BOT CHUẨN CỦA SẾP VÀO ĐÂY
     const fetchLiveInternalRates = async () => {
       try {
-        const response = await fetch('https://bao-gia-mini-app.onrender.com/api/rates');
+        const response = await fetch('https://bot-ty-gia-swc.onrender.com/api/rates');
         const data = await response.json();
         if (data.swc && data.rsw) {
           setInternalRates({ swc: data.swc, rsw: data.rsw });
@@ -82,7 +82,7 @@ function App() {
       }
     };
 
-    // LẤY GIÁ TỪ BINANCE (ĐÃ SỬA LỖI CHÍNH TẢ priceMap)
+    // LẤY GIÁ TỪ BINANCE
     const fetchCryptoPrices = async () => {
       try {
         const url = `https://api.binance.com/api/v3/ticker/price?symbols=${encodeURIComponent(JSON.stringify(binanceSymbols))}`;
@@ -103,12 +103,15 @@ function App() {
       }
     };
 
+    // Chạy fetch ngay khi mở App
     fetchLiveInternalRates();
     fetchCryptoPrices();
+    
+    // Tự động hỏi giá liên tục mỗi 5 giây (Bỏ qua rào cản cache của Telegram)
     const interval = setInterval(() => {
       fetchLiveInternalRates();
       fetchCryptoPrices();
-    }, 10000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
@@ -238,7 +241,6 @@ function App() {
                   <label className="block text-xs font-bold mb-2 text-slate-600 ml-1">Số lượng USD muốn mua:</label>
                   <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full p-4 rounded-2xl border-2 border-slate-100 font-black text-center text-3xl text-blue-600 bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0.00" />
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold mb-2 text-slate-600 ml-1">Gmail nhận biên lai:</label>
                   <input type="email" value={gmail} onChange={(e) => setGmail(e.target.value)} className="w-full p-4 rounded-2xl border-2 border-slate-100 font-bold text-center text-slate-800 bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="vidu@gmail.com" />
