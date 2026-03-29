@@ -132,17 +132,18 @@ function App() {
   const totalVNDNum = Number(amount) * currentRate * 1000;
   const totalVNDStr = isNaN(totalVNDNum) ? '0' : totalVNDNum.toLocaleString('vi-VN');
 
-  const handleSendData = () => {
-    // 🛡️ ĐÃ FIX LỖI BUILD TẠI ĐÂY (Line 147)
+const handleSendData = async () => {
+    // 🛡️ 1. Kiểm tra xác minh
     if (!tgUser.isVerified) {
       WebApp.showPopup({
         title: '⚠️ Chưa xác minh',
         message: 'Tài khoản của Sếp chưa hoàn tất KYC. Vui lòng nhắn tin Họ Tên + SĐT cho Bot và đợi Admin duyệt để đặt lệnh!',
-        buttons: [{ type: 'ok' }] // Chỉ để type: 'ok', không thêm text nhãn vào đây
+        buttons: [{ type: 'ok' }]
       });
       return;
     }
 
+    // 🛡️ 2. Kiểm tra số lượng
     if (!amount || Number(amount) <= 0) {
       WebApp.showAlert("⚠️ Sếp hãy nhập số lượng USD muốn nạp!");
       return;
@@ -152,15 +153,41 @@ function App() {
       return;
     }
 
+    // 🚀 3. Lấy chat_id từ URL để biết gửi QR cho ai
+    const urlParams = new URLSearchParams(window.location.search);
+    const chat_id = urlParams.get('chat_id');
+
     const payload = {
+      chat_id: chat_id,
+      user_name: tgUser.name,
       amount: Number(amount),
-      platform,
-      gmail: gmail.trim(),
-      rate: currentRate,
-      totalVND: totalVNDNum,
-      timestamp: new Date().toISOString()
+      platform: platform,
+      gmail: gmail.trim()
     };
-    WebApp.sendData(JSON.stringify(payload));
+
+    // 🚀 4. GỬI ĐƠN QUA API (Nút xanh hay nút dưới đều chạy 100%)
+    try {
+      // Hiện loading trên nút chính của Telegram (nếu có dùng)
+      WebApp.MainButton.setText("ĐANG TẠO HÓA ĐƠN...");
+      WebApp.MainButton.showProgress();
+
+      const response = await fetch('https://bao-gia-mini-app.onrender.com/api/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        // Nếu thành công thì đóng App luôn, QR sẽ tự nảy ra trong chat
+        WebApp.close();
+      } else {
+        WebApp.showAlert("❌ Lỗi server Bot, Sếp thử lại nhé!");
+      }
+    } catch (e) {
+      WebApp.showAlert("❌ Không kết nối được với Bot. Sếp kiểm tra mạng nhé!");
+    } finally {
+      WebApp.MainButton.hideProgress();
+    }
   };
 
   const coinBlocks = [
