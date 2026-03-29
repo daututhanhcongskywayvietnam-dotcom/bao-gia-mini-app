@@ -40,15 +40,14 @@ function App() {
   const [internalRates, setInternalRates] = useState({ swc: 27.0, rsw: 27.0 });
   const [prices, setPrices] = useState<CryptoPrices>({});
   
-  // Nâng cấp tgUser có thêm isVerified và totalPurchased để tính hạng
+  // Khởi tạo user rỗng, dữ liệu thật sẽ được nạp ở phần useEffect bên dưới
   const [tgUser, setTgUser] = useState({
     name: 'Khách Hàng',
     avatar: 'https://i.pravatar.cc/150?img=11',
-    isVerified: false, // MẶC ĐỊNH LÀ CHƯA XÁC MINH (Chỉnh thành true để test)
-    totalPurchased: 5500 // Giả lập tổng tiền đã mua (USD) để chia hạng
+    isVerified: false, 
+    totalPurchased: 0 
   });
 
-  // Đã bỏ LINK và ADA
   const displayCoins = ["BTC", "ETH", "BNB", "XRP", "DOGE", "CAKE"];
   const binanceSymbols = displayCoins.map(coin => coin + "USDT");
 
@@ -67,17 +66,32 @@ function App() {
     WebApp.ready();
     WebApp.expand();
 
+    // 🚀 BẮT DỮ LIỆU TỪ LINK URL CỦA BOT GỬI VÀO
     const urlParams = new URLSearchParams(window.location.search);
     const rSWC = parseFloat(urlParams.get('swc') || '27.0');
     const rRSW = parseFloat(urlParams.get('rsw') || '27.0');
     setInternalRates({ swc: rSWC, rsw: rRSW });
 
+    // Đọc trạng thái xác minh (nếu URL có ?verified=true hoặc ?verified=1)
+    const isVerifiedUrl = urlParams.get('verified') === 'true' || urlParams.get('verified') === '1';
+    
+    // Đọc tổng tiền đã mua (nếu URL có ?total=5000)
+    const totalPurchasedUrl = parseFloat(urlParams.get('total') || '0');
+
     const user = WebApp.initDataUnsafe?.user;
     if (user) {
-      setTgUser(prev => ({
-        ...prev,
+      setTgUser({
         name: (user.last_name ? user.last_name + ' ' : '') + user.first_name,
         avatar: user.photo_url || 'https://i.pravatar.cc/150?img=11',
+        isVerified: isVerifiedUrl, 
+        totalPurchased: totalPurchasedUrl 
+      });
+    } else {
+      // Trường hợp mở app ngoài Telegram để test trên trình duyệt
+      setTgUser(prev => ({
+        ...prev,
+        isVerified: isVerifiedUrl,
+        totalPurchased: totalPurchasedUrl
       }));
     }
 
@@ -158,7 +172,6 @@ function App() {
     WebApp.sendData(JSON.stringify(payload));
   };
 
-  // Đã xóa bỏ LINK và ADA khỏi danh sách khối coin
   const coinBlocks = [
     { sym: 'BTC', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1.png' },
     { sym: 'ETH', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png' },
@@ -231,7 +244,6 @@ function App() {
         {activeTab === 'trade' ? (
           <div className="w-full max-w-md mx-auto flex flex-col gap-5 animate-slide-up">
             
-            {/* Cập nhật grid-cols-3 vì giờ chỉ còn 6 coin cho cân đối */}
             <section className="w-full grid grid-cols-3 gap-2">
               {coinBlocks.map(coin => (
                 <div key={coin.sym} className="bg-white border border-slate-200 py-3 px-1 rounded-2xl flex flex-col items-center shadow-sm">
@@ -260,7 +272,6 @@ function App() {
               <div className="flex flex-col gap-4">
                 <div>
                   <label className="block text-xs font-bold mb-2 text-slate-600 ml-1">Số lượng USD muốn mua:</label>
-                  {/* Phóng to số tiền text-3xl -> text-4xl */}
                   <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full p-4 rounded-2xl border-2 border-slate-100 font-black text-center text-4xl text-blue-600 bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0.00" />
                 </div>
                 <div>
@@ -271,7 +282,6 @@ function App() {
 
               <div>
                 <label className="block text-xs font-black mb-2 text-slate-500 uppercase tracking-widest text-center">Tổng tiền thanh toán</label>
-                {/* Phóng to tổng tiền text-4xl -> text-5xl */}
                 <div className="w-full p-5 rounded-2xl bg-emerald-50 border-2 border-emerald-200 text-emerald-700 text-5xl font-black text-center shadow-inner break-words">
                   {totalVNDStr} <span className="text-lg font-bold">VNĐ</span>
                 </div>
