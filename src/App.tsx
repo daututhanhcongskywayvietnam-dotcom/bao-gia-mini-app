@@ -40,7 +40,7 @@ function App() {
   const [internalRates, setInternalRates] = useState({ swc: 27.0, rsw: 27.0 });
   const [prices, setPrices] = useState<CryptoPrices>({});
   
-  // Khởi tạo user rỗng, dữ liệu thật sẽ được nạp ở phần useEffect bên dưới
+  // State User với giá trị mặc định, sẽ được cập nhật ngay khi app load
   const [tgUser, setTgUser] = useState({
     name: 'Khách Hàng',
     avatar: 'https://i.pravatar.cc/150?img=11',
@@ -66,34 +66,27 @@ function App() {
     WebApp.ready();
     WebApp.expand();
 
-    // 🚀 BẮT DỮ LIỆU TỪ LINK URL CỦA BOT GỬI VÀO
+    // 🚀 BẮT DỮ LIỆU TỪ LINK URL CỦA BOT GỬI VÀO (Quan trọng để hiển thị Đã xác minh)
     const urlParams = new URLSearchParams(window.location.search);
     const rSWC = parseFloat(urlParams.get('swc') || '27.0');
     const rRSW = parseFloat(urlParams.get('rsw') || '27.0');
     setInternalRates({ swc: rSWC, rsw: rRSW });
 
-    // Đọc trạng thái xác minh (nếu URL có ?verified=true hoặc ?verified=1)
-    const isVerifiedUrl = urlParams.get('verified') === 'true' || urlParams.get('verified') === '1';
+    // Đọc trạng thái xác minh từ URL (?verified=true)
+    const isVerifiedFromUrl = urlParams.get('verified') === 'true';
     
-    // Đọc tổng tiền đã mua (nếu URL có ?total=5000)
-    const totalPurchasedUrl = parseFloat(urlParams.get('total') || '0');
+    // Đọc tổng tiền đã mua từ URL (?total=5000)
+    const totalPurchasedFromUrl = parseFloat(urlParams.get('total') || '0');
 
     const user = WebApp.initDataUnsafe?.user;
-    if (user) {
-      setTgUser({
-        name: (user.last_name ? user.last_name + ' ' : '') + user.first_name,
-        avatar: user.photo_url || 'https://i.pravatar.cc/150?img=11',
-        isVerified: isVerifiedUrl, 
-        totalPurchased: totalPurchasedUrl 
-      });
-    } else {
-      // Trường hợp mở app ngoài Telegram để test trên trình duyệt
-      setTgUser(prev => ({
-        ...prev,
-        isVerified: isVerifiedUrl,
-        totalPurchased: totalPurchasedUrl
-      }));
-    }
+    
+    // Cập nhật thông tin User đồng bộ với dữ liệu Bot truyền sang
+    setTgUser({
+      name: user ? ((user.last_name ? user.last_name + ' ' : '') + user.first_name) : 'Khách Hàng',
+      avatar: user?.photo_url || 'https://i.pravatar.cc/150?img=11',
+      isVerified: isVerifiedFromUrl, // Lấy giá trị thật từ Bot
+      totalPurchased: totalPurchasedFromUrl // Lấy giá trị thật từ Bot
+    });
 
     const fetchLiveInternalRates = async () => {
       try {
@@ -146,9 +139,13 @@ function App() {
   const totalVNDStr = isNaN(totalVNDNum) ? '0' : totalVNDNum.toLocaleString('vi-VN');
 
   const handleSendData = () => {
-    // Check xác minh trước
+    // 🛡️ CHẶN LỆNH KHI CHƯA XÁC MINH
     if (!tgUser.isVerified) {
-      WebApp.showAlert("⚠️ Sếp chưa xác minh tài khoản! Vui lòng hoàn tất xác minh trước khi tạo QR giao dịch.");
+      WebApp.showPopup({
+        title: '⚠️ Chưa xác minh',
+        message: 'Tài khoản của Sếp chưa hoàn tất KYC. Vui lòng nhắn tin Họ Tên + SĐT cho Bot và đợi Admin duyệt để đặt lệnh!',
+        buttons: [{ type: 'ok', text: 'Đã hiểu' }]
+      });
       return;
     }
 
