@@ -22,8 +22,8 @@ interface Transaction {
 // 2. DỮ LIỆU MẪU LỊCH SỬ
 // ==========================================================
 const MOCK_HISTORY: Transaction[] = [
-  { id: '#SWC999', userId: 'ID: 507318xxx', date: '29/03 07:15', type: 'Mua SWC', amountUSD: 5000, amountVND: '135.000.000', status: 'Hoàn thành' },
-  { id: '#RSW888', userId: 'ID: 751590xxx', date: '29/03 06:45', type: 'Mua RSW', amountUSD: 200, amountVND: '5.400.000', status: 'Bị huỷ' },
+  { id: '#SWC999', userId: 'ID: 507318xxx', date: '30/03 07:15', type: 'Mua SWC', amountUSD: 5000, amountVND: '135.000.000', status: 'Hoàn thành' },
+  { id: '#RSW888', userId: 'ID: 751590xxx', date: '30/03 06:45', type: 'Mua RSW', amountUSD: 200, amountVND: '5.400.000', status: 'Bị huỷ' },
   { id: '#SWC777', userId: 'ID: 124456xxx', date: '29/03 05:20', type: 'Mua SWC', amountUSD: 1000, amountVND: '27.000.000', status: 'Hoàn thành' },
   { id: '#SWC666', userId: 'ID: 998234xxx', date: '28/03 23:10', type: 'Mua SWC', amountUSD: 1500, amountVND: '40.500.000', status: 'Hoàn thành' },
   { id: '#RSW555', userId: 'ID: 662341xxx', date: '28/03 21:05', type: 'Mua RSW', amountUSD: 100, amountVND: '2.700.000', status: 'Hoàn thành' },
@@ -31,9 +31,9 @@ const MOCK_HISTORY: Transaction[] = [
 
 function App() {
   // ==========================================================
-  // 3. QUẢN LÝ TRẠNG THÁI (STATES)
+  // 3. QUẢN LÝ TRẠNG THÁI (STATES) - Đã thêm tab 'market'
   // ==========================================================
-  const [activeTab, setActiveTab] = useState<'trade' | 'history'>('trade');
+  const [activeTab, setActiveTab] = useState<'trade' | 'market' | 'history'>('trade');
   const [amount, setAmount] = useState('');
   const [platform, setPlatform] = useState('SWC');
   const [gmail, setGmail] = useState('');
@@ -47,7 +47,8 @@ function App() {
     totalPurchased: 0 
   });
 
-  const displayCoins = ["BTC", "ETH", "BNB", "XRP", "DOGE", "CAKE"];
+  // Top 10 Coins
+  const displayCoins = ["BTC", "ETH", "BNB", "SOL", "XRP", "DOGE", "ADA", "AVAX", "TRX", "DOT"];
   const binanceSymbols = displayCoins.map(coin => coin + "USDT");
 
   const getRank = (total: number) => {
@@ -69,7 +70,6 @@ function App() {
     const rRSW = parseFloat(urlParams.get('rsw') || '27.0');
     setInternalRates({ swc: rSWC, rsw: rRSW });
 
-    // 🚀 LẤY DỮ LIỆU XÁC MINH TỪ BOT TRUYỀN SANG
     const isVerifiedFromUrl = urlParams.get('verified') === 'true';
     const totalPurchasedFromUrl = parseFloat(urlParams.get('total') || '0');
 
@@ -82,7 +82,6 @@ function App() {
       totalPurchased: totalPurchasedFromUrl
     });
 
-    // HÀM LẤY TỶ GIÁ (CHỈ DÙNG ĐỂ HIỂN THỊ)
     const fetchLiveInternalRates = async () => {
       try {
         const response = await fetch('https://bot-ty-gia-swc.onrender.com/api/rates');
@@ -105,7 +104,7 @@ function App() {
           data.forEach((item: any) => {
             const symbol = item.symbol.replace('USDT', '');
             const price = parseFloat(item.price);
-            const dec = (symbol === 'DOGE' || symbol === 'XRP') ? 4 : 2;
+            const dec = (symbol === 'DOGE' || symbol === 'XRP' || symbol === 'ADA' || symbol === 'TRX') ? 4 : 2;
             priceMap[symbol] = price.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
           });
           setPrices(priceMap);
@@ -127,14 +126,13 @@ function App() {
   }, []);
 
   // ==========================================================
-  // 5. TÍNH TIỀN VÀ XỬ LÝ NÚT THANH TOÁN (FIX CHAT_ID MẠNH MẼ NHẤT)
+  // 5. TÍNH TIỀN VÀ XỬ LÝ NÚT THANH TOÁN
   // ==========================================================
   const currentRate = platform === 'SWC' ? internalRates.swc : internalRates.rsw;
   const totalVNDNum = Number(amount) * currentRate * 1000;
   const totalVNDStr = isNaN(totalVNDNum) ? '0' : totalVNDNum.toLocaleString('vi-VN');
 
   const handleSendData = async () => {
-    // 🛡️ 1. Kiểm tra xác minh
     if (!tgUser.isVerified) {
       WebApp.showPopup({
         title: '⚠️ Chưa xác minh',
@@ -144,7 +142,6 @@ function App() {
       return;
     }
 
-    // 🛡️ 2. Kiểm tra số lượng
     if (!amount || Number(amount) <= 0) {
       WebApp.showAlert("⚠️ Sếp hãy nhập số lượng USD muốn nạp!");
       return;
@@ -154,11 +151,8 @@ function App() {
       return;
     }
 
-    // 🚀 3. LẤY CHAT_ID THÔNG MINH TỪ LÕI TELEGRAM (Bỏ qua link URL)
     const user = WebApp.initDataUnsafe?.user;
     const urlParams = new URLSearchParams(window.location.search);
-    
-    // Móc thẳng ID từ hệ thống Telegram. Rất khó xịt!
     const chat_id = user?.id?.toString() || urlParams.get('chat_id');
 
     if (!chat_id) {
@@ -174,7 +168,6 @@ function App() {
       gmail: gmail.trim()
     };
 
-    // 🚀 4. GỬI QUA ĐƯỜNG ỐNG API
     try {
       WebApp.MainButton.setText("ĐANG TẠO HÓA ĐƠN...");
       WebApp.MainButton.showProgress();
@@ -186,7 +179,6 @@ function App() {
       });
 
       if (response.ok) {
-        // Đóng App luôn để khách thấy QR nảy ra trong chat
         WebApp.close();
       } else {
         const errData = await response.json();
@@ -200,12 +192,16 @@ function App() {
   };
 
   const coinBlocks = [
-    { sym: 'BTC', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1.png' },
-    { sym: 'ETH', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png' },
-    { sym: 'BNB', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png' },
-    { sym: 'XRP', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/52.png' },
-    { sym: 'DOGE', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/74.png' },
-    { sym: 'CAKE', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/7186.png' }
+    { sym: 'BTC', name: 'Bitcoin', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1.png' },
+    { sym: 'ETH', name: 'Ethereum', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png' },
+    { sym: 'BNB', name: 'BNB', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png' },
+    { sym: 'SOL', name: 'Solana', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png' },
+    { sym: 'XRP', name: 'XRP', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/52.png' },
+    { sym: 'DOGE', name: 'Dogecoin', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/74.png' },
+    { sym: 'ADA', name: 'Cardano', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png' },
+    { sym: 'AVAX', name: 'Avalanche', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5805.png' },
+    { sym: 'TRX', name: 'TRON', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1958.png' },
+    { sym: 'DOT', name: 'Polkadot', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/6636.png' }
   ];
 
   return (
@@ -230,8 +226,8 @@ function App() {
           animation: spin-slow 10s linear infinite, glow-flash 2s ease-in-out infinite;
           z-index: 0; box-sizing: border-box;
         }
-        .animate-slide-up { animation: slideUp 0.4s ease-out; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
       {/* HEADER */}
@@ -267,72 +263,97 @@ function App() {
       </header>
 
       {/* MAIN CONTENT */}
-      <main className="flex-grow overflow-y-auto pb-28 p-4 block">
-        {activeTab === 'trade' ? (
-          <div className="w-full max-w-md mx-auto flex flex-col gap-5 animate-slide-up">
-            
-            <section className="w-full grid grid-cols-3 gap-2">
-              {coinBlocks.map(coin => (
-                <div key={coin.sym} className="bg-white border border-slate-200 py-3 px-1 rounded-2xl flex flex-col items-center shadow-sm">
-                  <img src={coin.img} className="w-7 h-7 mb-1.5" alt={coin.sym} />
-                  <span className="text-[10px] font-bold text-slate-500">{coin.sym}</span>
-                  <span className="text-[10px] font-black text-emerald-600">${prices[coin.sym] || '...'}</span>
-                </div>
-              ))}
-            </section>
-
-            <section className="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-100 flex flex-col gap-5">
-              <div>
-                <label className="block text-xs font-black mb-3 text-slate-500 uppercase tracking-widest text-center">1. Chọn dự án đầu tư</label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button onClick={() => setPlatform('SWC')} className={`p-4 rounded-2xl text-center transition-all duration-300 transform active:scale-95 ${platform === 'SWC' ? 'bg-blue-600 text-white shadow-lg ring-4 ring-blue-100 scale-105' : 'bg-slate-50 text-slate-400'}`}>
-                    <p className="text-[10px] font-bold uppercase mb-1">Dự án SWC</p>
-                    <p className="text-2xl font-black">{internalRates.swc}</p>
-                  </button>
-                  <button onClick={() => setPlatform('RSW')} className={`p-4 rounded-2xl text-center transition-all duration-300 transform active:scale-95 ${platform === 'RSW' ? 'bg-red-600 text-white shadow-lg ring-4 ring-red-100 scale-105' : 'bg-slate-50 text-slate-400'}`}>
-                    <p className="text-[10px] font-bold uppercase mb-1">Dự án RSW</p>
-                    <p className="text-2xl font-black">{internalRates.rsw}</p>
-                  </button>
-                </div>
+      <main className="flex-grow overflow-y-auto pb-24 p-4 block">
+        
+        {/* ================= TAB GIAO DỊCH ================= */}
+        {activeTab === 'trade' && (
+          <div className="w-full max-w-md mx-auto flex flex-col gap-3 animate-slide-up">
+            <section className="bg-white p-5 rounded-[2rem] shadow-xl border border-slate-100 flex flex-col gap-4">
+              
+              {/* Chọn dự án */}
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => setPlatform('SWC')} className={`p-3 rounded-2xl text-center transition-all duration-300 transform active:scale-95 ${platform === 'SWC' ? 'bg-blue-600 text-white shadow-lg ring-4 ring-blue-100 scale-105' : 'bg-slate-50 text-slate-400'}`}>
+                  <p className="text-[10px] font-bold uppercase mb-1">Dự án SWC</p>
+                  <p className="text-xl font-black">{internalRates.swc}</p>
+                </button>
+                <button onClick={() => setPlatform('RSW')} className={`p-3 rounded-2xl text-center transition-all duration-300 transform active:scale-95 ${platform === 'RSW' ? 'bg-red-600 text-white shadow-lg ring-4 ring-red-100 scale-105' : 'bg-slate-50 text-slate-400'}`}>
+                  <p className="text-[10px] font-bold uppercase mb-1">Dự án RSW</p>
+                  <p className="text-xl font-black">{internalRates.rsw}</p>
+                </button>
               </div>
 
-              <div className="flex flex-col gap-4">
+              {/* Nhập số lượng và Gmail (Đã thu gọn để chống che bàn phím) */}
+              <div className="flex flex-col gap-3 mt-1">
                 <div>
-                  <label className="block text-xs font-bold mb-2 text-slate-600 ml-1">Số lượng USD muốn mua:</label>
-                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full p-4 rounded-2xl border-2 border-slate-100 font-black text-center text-4xl text-blue-600 bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0.00" />
+                  <label className="block text-[11px] font-bold mb-1.5 text-slate-500 ml-1 uppercase tracking-wider">Số lượng USD muốn mua:</label>
+                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full p-3 rounded-[1rem] border-2 border-slate-100 font-black text-center text-3xl text-blue-600 bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0.00" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold mb-2 text-slate-600 ml-1">Gmail nhận biên lai:</label>
-                  <input type="email" value={gmail} onChange={(e) => setGmail(e.target.value)} className="w-full p-4 rounded-2xl border-2 border-slate-100 font-bold text-center text-slate-800 bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="vidu@gmail.com" />
+                  <label className="block text-[11px] font-bold mb-1.5 text-slate-500 ml-1 uppercase tracking-wider">Gmail nhận biên lai:</label>
+                  <input type="email" value={gmail} onChange={(e) => setGmail(e.target.value)} className="w-full p-3 rounded-[1rem] border-2 border-slate-100 font-bold text-center text-sm text-slate-800 bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="vidu@gmail.com" />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-black mb-2 text-slate-500 uppercase tracking-widest text-center">Tổng tiền thanh toán</label>
-                <div className="w-full p-5 rounded-2xl bg-emerald-50 border-2 border-emerald-200 text-emerald-700 text-5xl font-black text-center shadow-inner break-words">
-                  {totalVNDStr} <span className="text-lg font-bold">VNĐ</span>
+              {/* Tổng tiền thanh toán (Thu gọn lại) */}
+              <div className="mt-1">
+                <div className="w-full p-4 rounded-[1rem] bg-emerald-50 border border-emerald-200 text-emerald-700 text-3xl font-black text-center shadow-inner break-words">
+                  {totalVNDStr} <span className="text-sm font-bold">VNĐ</span>
                 </div>
               </div>
 
-              <div className="alert-box-powerful w-full bg-red-50 border-2 border-red-200 text-red-900 p-4 rounded-2xl text-center">
-                <b className="text-red-700 text-sm uppercase block mb-1">🚨 Cảnh báo quan trọng</b>
-                <p className="text-[10px] text-left leading-tight font-medium">
+              <div className="alert-box-powerful w-full bg-red-50 border border-red-200 text-red-900 p-3 rounded-[1rem] text-center">
+                <b className="text-red-700 text-xs uppercase block mb-1">🚨 Cảnh báo quan trọng</b>
+                <p className="text-[9px] text-left leading-tight font-medium">
                   • Chỉ giao dịch bằng <b>TÀI KHOẢN CHÍNH CHỦ</b>.<br/>
                   • Chuyển khoản <b>ĐÚNG NỘI DUNG</b> và <b>SỐ TÀI KHOẢN</b> trên QR.<br/>
-                  • Người mua chịu trách nhiệm 100% về nguồn tiền của mình.
+                  • Chịu trách nhiệm 100% về nguồn tiền của mình.
                 </p>
               </div>
 
-              <button onClick={handleSendData} className="w-full bg-gradient-to-r from-blue-700 to-blue-900 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all text-xl uppercase tracking-tighter flex justify-center items-center gap-3">
+              <button onClick={handleSendData} className="w-full bg-gradient-to-r from-blue-700 to-blue-900 text-white font-black py-4 rounded-[1rem] shadow-xl active:scale-95 transition-all text-lg uppercase tracking-tight flex justify-center items-center gap-2 mt-1">
                 <span>💳</span> LẤY MÃ QR THANH TOÁN
               </button>
             </section>
           </div>
-        ) : (
+        )}
+
+        {/* ================= TAB THỊ TRƯỜNG ================= */}
+        {activeTab === 'market' && (
+          <div className="w-full max-w-md mx-auto flex flex-col gap-3 animate-slide-up">
+            <div className="flex justify-between items-center px-2 mb-1">
+              <h2 className="text-xl font-black text-slate-800">Thị trường 24h</h2>
+              <span className="text-[10px] text-emerald-600 font-bold bg-emerald-100 px-2 py-1 rounded-full animate-pulse flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div> LIVE
+              </span>
+            </div>
+            
+            {/* List Top 10 Coins */}
+            <div className="flex flex-col gap-2">
+              {coinBlocks.map((coin, index) => (
+                <div key={coin.sym} className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center transform transition-transform">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-slate-300 w-4 text-center">{index + 1}</span>
+                    <img src={coin.img} className="w-8 h-8 rounded-full border border-slate-100" alt={coin.sym} />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-black text-slate-800 leading-none">{coin.sym}</span>
+                      <span className="text-[10px] font-bold text-slate-400 mt-0.5">{coin.name}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-black text-emerald-600">${prices[coin.sym] || '...'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ================= TAB LỊCH SỬ ================= */}
+        {activeTab === 'history' && (
           <div className="flex flex-col gap-3 animate-slide-up max-w-md mx-auto">
-            <div className="flex justify-between items-center px-2 mb-2">
+            <div className="flex justify-between items-center px-2 mb-1">
               <h2 className="text-xl font-black text-slate-800">Lịch sử hệ thống</h2>
-              <span className="text-[10px] text-slate-400 font-bold bg-slate-200 px-2 py-1 rounded-full animate-pulse">LIVE</span>
+              <span className="text-[10px] text-slate-400 font-bold bg-slate-200 px-2 py-1 rounded-full animate-pulse">CẬP NHẬT</span>
             </div>
             
             {MOCK_HISTORY.map((tx) => (
@@ -360,23 +381,34 @@ function App() {
         )}
       </main>
 
-      {/* BOTTOM NAV BAR */}
-      <nav className="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-slate-200 p-3 flex justify-around shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-40 pb-safe-area-inset-bottom">
-        <button onClick={() => setActiveTab('trade')} className={`flex flex-col items-center gap-1 transition-all duration-300 ${activeTab === 'trade' ? 'text-blue-600 scale-110' : 'text-slate-400'}`}>
-          <div className={`p-2 rounded-xl ${activeTab === 'trade' ? 'bg-blue-50' : ''}`}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      {/* BOTTOM NAV BAR (3 TABS) */}
+      <nav className="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-slate-200 p-2 flex justify-around shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-40 pb-safe-area-inset-bottom">
+        
+        {/* Nút Giao Dịch */}
+        <button onClick={() => setActiveTab('trade')} className={`flex flex-col items-center gap-1 transition-all duration-300 w-1/3 ${activeTab === 'trade' ? 'text-blue-600 scale-105' : 'text-slate-400'}`}>
+          <div className={`p-1.5 rounded-xl ${activeTab === 'trade' ? 'bg-blue-50' : ''}`}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           </div>
-          <span className="text-[10px] font-black uppercase tracking-widest">GIAO DỊCH</span>
+          <span className="text-[9px] font-black uppercase tracking-widest">Giao Dịch</span>
         </button>
 
-        <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1 transition-all duration-300 ${activeTab === 'history' ? 'text-blue-600 scale-110' : 'text-gray-400'}`}>
-          <div className={`p-2 rounded-xl ${activeTab === 'history' ? 'bg-blue-50' : ''}`}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        {/* Nút Thị Trường */}
+        <button onClick={() => setActiveTab('market')} className={`flex flex-col items-center gap-1 transition-all duration-300 w-1/3 ${activeTab === 'market' ? 'text-blue-600 scale-105' : 'text-slate-400'}`}>
+          <div className={`p-1.5 rounded-xl ${activeTab === 'market' ? 'bg-blue-50' : ''}`}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
           </div>
-          <span className="text-[10px] font-black uppercase tracking-widest">LỊCH SỬ</span>
+          <span className="text-[9px] font-black uppercase tracking-widest">Thị Trường</span>
         </button>
+
+        {/* Nút Lịch Sử */}
+        <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1 transition-all duration-300 w-1/3 ${activeTab === 'history' ? 'text-blue-600 scale-105' : 'text-slate-400'}`}>
+          <div className={`p-1.5 rounded-xl ${activeTab === 'history' ? 'bg-blue-50' : ''}`}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <span className="text-[9px] font-black uppercase tracking-widest">Lịch Sử</span>
+        </button>
+
       </nav>
-
     </div>
   );
 }
