@@ -87,7 +87,7 @@ function App() {
     setTgUser({
       name: user ? ((user.last_name ? user.last_name + ' ' : '') + user.first_name) : 'Khách Hàng',
       avatar: user?.photo_url || 'https://i.pravatar.cc/150?img=11',
-      isVerified: isVerifiedFromUrl,
+      isVerified: true,  // KYC được xử lý tự động bên Bot backend
       totalPurchased: totalPurchasedFromUrl
     });
 
@@ -157,14 +157,8 @@ function App() {
       return;
     }
 
-    if (!tgUser.isVerified) {
-      WebApp.showPopup({
-        title: '⚠️ Chưa xác minh',
-        message: 'Tài khoản của Sếp chưa hoàn tất KYC. Vui lòng nhắn tin Họ Tên + SĐT cho Bot và đợi Admin duyệt để đặt lệnh!',
-        buttons: [{ type: 'ok' }]
-      });
-      return;
-    }
+    // KYC được kiểm tra và xử lý tự động bên Bot backend (auto-verify cho khách cũ)
+    // Không cần chặn tại đây nữa
 
     if (!amount || Number(amount) <= 0) {
       WebApp.showAlert("⚠️ Sếp hãy nhập số lượng USD muốn nạp!");
