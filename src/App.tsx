@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import WebApp from '@twa-dev/sdk';
+
+// Khai báo đối tượng WebApp toàn cục thay cho import thư viện
+const WebApp = (window as any).Telegram?.WebApp;
 
 // ==========================================================
 // 1. ĐỊNH NGHĨA KIỂU DỮ LIỆU (INTERFACES)
@@ -31,13 +33,15 @@ const MOCK_HISTORY: Transaction[] = [
 
 function App() {
   // ==========================================================
-  // 3. QUẢN LÝ TRẠNG THÁI (STATES) - Đã thêm tab 'market'
+  // 3. QUẢN LÝ TRẠNG THÁI (STATES)
   // ==========================================================
   const [activeTab, setActiveTab] = useState<'trade' | 'market' | 'history'>('trade');
   const [amount, setAmount] = useState('');
   const [platform, setPlatform] = useState('SWC');
   const [gmail, setGmail] = useState('');
-  const [internalRates, setInternalRates] = useState({ swc: 27.0, rsw: 27.0 });
+  
+  // Bổ sung thêm usdt và micron vào state
+  const [internalRates, setInternalRates] = useState({ swc: 27.0, rsw: 27.0, usdt: 27.0, micron: 27.0 });
   const [prices, setPrices] = useState<CryptoPrices>({});
   
   const [tgUser, setTgUser] = useState({
@@ -62,18 +66,23 @@ function App() {
   // 4. HIỆU ỨNG VÀ LOGIC FETCH DỮ LIỆU
   // ==========================================================
   useEffect(() => {
-    WebApp.ready();
-    WebApp.expand();
+    if (WebApp) {
+      WebApp.ready();
+      WebApp.expand();
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     const rSWC = parseFloat(urlParams.get('swc') || '27.0');
     const rRSW = parseFloat(urlParams.get('rsw') || '27.0');
-    setInternalRates({ swc: rSWC, rsw: rRSW });
+    const rUSDT = parseFloat(urlParams.get('usdt') || '27.0');
+    const rMICRON = parseFloat(urlParams.get('micron') || '27.0');
+    
+    setInternalRates({ swc: rSWC, rsw: rRSW, usdt: rUSDT, micron: rMICRON });
 
     const isVerifiedFromUrl = urlParams.get('verified') === 'true';
     const totalPurchasedFromUrl = parseFloat(urlParams.get('total') || '0');
 
-    const user = WebApp.initDataUnsafe?.user;
+    const user = WebApp?.initDataUnsafe?.user;
     
     setTgUser({
       name: user ? ((user.last_name ? user.last_name + ' ' : '') + user.first_name) : 'Khách Hàng',
@@ -87,7 +96,12 @@ function App() {
         const response = await fetch('https://bot-ty-gia-swc.onrender.com/api/rates');
         const data = await response.json();
         if (data.swc && data.rsw) {
-          setInternalRates({ swc: data.swc, rsw: data.rsw });
+          setInternalRates({ 
+            swc: data.swc, 
+            rsw: data.rsw, 
+            usdt: data.usdt || 27.0, 
+            micron: data.micron || 27.0 
+          });
         }
       } catch (e) {
         console.warn("Đang dùng giá dự phòng...");
@@ -128,11 +142,21 @@ function App() {
   // ==========================================================
   // 5. TÍNH TIỀN VÀ XỬ LÝ NÚT THANH TOÁN
   // ==========================================================
-  const currentRate = platform === 'SWC' ? internalRates.swc : internalRates.rsw;
+  // Tính tỷ giá hiện tại tuỳ theo platform được chọn
+  const currentRate = platform === 'SWC' ? internalRates.swc :
+                      platform === 'RSW' ? internalRates.rsw :
+                      platform === 'USDT' ? internalRates.usdt :
+                      internalRates.micron;
+
   const totalVNDNum = Number(amount) * currentRate * 1000;
   const totalVNDStr = isNaN(totalVNDNum) ? '0' : totalVNDNum.toLocaleString('vi-VN');
 
   const handleSendData = async () => {
+    if (!WebApp) {
+      alert("Tính năng này chỉ hoạt động trên Telegram Mini App!");
+      return;
+    }
+
     if (!tgUser.isVerified) {
       WebApp.showPopup({
         title: '⚠️ Chưa xác minh',
@@ -280,9 +304,21 @@ function App() {
                   <p className="text-[10px] font-bold uppercase mb-1">Dự án RSW</p>
                   <p className="text-xl font-black">{internalRates.rsw}</p>
                 </button>
+                
+                {/* Bổ sung nút USDT */}
+                <button onClick={() => setPlatform('USDT')} className={`p-3 rounded-2xl text-center transition-all duration-300 transform active:scale-95 ${platform === 'USDT' ? 'bg-emerald-600 text-white shadow-lg ring-4 ring-emerald-100 scale-105' : 'bg-slate-50 text-slate-400'}`}>
+                  <p className="text-[10px] font-bold uppercase mb-1">Mua USDT</p>
+                  <p className="text-xl font-black">{internalRates.usdt}</p>
+                </button>
+                
+                {/* Bổ sung nút MICRON */}
+                <button onClick={() => setPlatform('MICRON')} className={`p-3 rounded-2xl text-center transition-all duration-300 transform active:scale-95 ${platform === 'MICRON' ? 'bg-purple-600 text-white shadow-lg ring-4 ring-purple-100 scale-105' : 'bg-slate-50 text-slate-400'}`}>
+                  <p className="text-[10px] font-bold uppercase mb-1">Dự án MICRON</p>
+                  <p className="text-xl font-black">{internalRates.micron}</p>
+                </button>
               </div>
 
-              {/* Nhập số lượng và Gmail (Đã thu gọn để chống che bàn phím) */}
+              {/* Nhập số lượng và Gmail */}
               <div className="flex flex-col gap-3 mt-1">
                 <div>
                   <label className="block text-[11px] font-bold mb-1.5 text-slate-500 ml-1 uppercase tracking-wider">Số lượng USD muốn mua:</label>
@@ -294,7 +330,7 @@ function App() {
                 </div>
               </div>
 
-              {/* Tổng tiền thanh toán (Thu gọn lại) */}
+              {/* Tổng tiền thanh toán */}
               <div className="mt-1">
                 <div className="w-full p-4 rounded-[1rem] bg-emerald-50 border border-emerald-200 text-emerald-700 text-3xl font-black text-center shadow-inner break-words">
                   {totalVNDStr} <span className="text-sm font-bold">VNĐ</span>
